@@ -1,11 +1,11 @@
 #!/bin/bash
 
 
-ips=("192.168.2."{99..105})
+ips=("192.168.1."{99..105})
 keys_file="$HOME/.ssh/keys"
 
 for i in {99..105}; do
-    ip="192.168.2.$i"
+    ip="192.168.1.$i"
     echo "Getting SSH key for $ip"
     # 使用SSH连接到主机并获取公钥
     if [[ $i -eq 99 ]]; then
