@@ -11,7 +11,7 @@ for image in $(kubeadm config images list); do
 done
 
 kubeadm_file=/tmp/kubeadm.txt 
-ctrl_ip=192.168.2.100
+ctrl_ip=192.168.1.100
 
 if [ $# -gt 0 ]; then
     echo "y" | kubeadm reset
