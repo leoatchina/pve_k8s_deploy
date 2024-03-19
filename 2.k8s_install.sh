@@ -44,7 +44,6 @@ systemctl enable containerd
 systemctl restart containerd
 systemctl status containerd
  
- 
 # 安装 kubelet/kubeadm/kubectl
 apt-get update -y && apt-get install -y apt-transport-https ca-certificates curl
 curl -fsSL https://mirrors.aliyun.com/kubernetes-new/core/stable/v1.29/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
