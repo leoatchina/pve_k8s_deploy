@@ -1,22 +1,25 @@
 #!/bin/bash
 
 
-ips=("192.168.1."{99..105})
+ips=("192.168.1."{99..104})
 keys_file="$HOME/.ssh/keys"
 
-for i in {99..105}; do
+for i in {99..104}; do
     ip="192.168.1.$i"
     echo "Getting SSH key for $ip"
     # 使用SSH连接到主机并获取公钥
     if [ "$i" -eq 99 ]; then
-        ssh -o StrictHostKeyChecking=no root@$ip cat ~/.ssh/id_rsa.pub > "$keys_file" 
+        cat ~/.ssh/id_rsa.pub > "$keys_file" 
     else
-        ssh -o StrictHostKeyChecking=no root@$ip cat ~/.ssh/id_rsa.pub >> "$keys_file"
+        # ssh-keygen -R "$ip"  
+        # ssh root@$ip 
+        ssh -o StrictHostKeyChecking=no root@$ip 'ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""'
+        ssh root@$ip cat ~/.ssh/id_rsa.pub >> "$keys_file"
     fi
 done
 
 for ip in "${ips[@]}"; do
-    echo "Processing $ip"
+    echo "====== Processing $ip ==============="
     # Ensure .ssh directory exists
     ssh root@$ip "mkdir -p ~/.ssh"
     # Loop over each key in the keys file

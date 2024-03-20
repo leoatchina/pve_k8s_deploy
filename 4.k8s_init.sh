@@ -1,10 +1,10 @@
 #!/bin/bash
 
-cp /etc/sysconfig/kubelet{,.bak}
-cat > /etc/sysconfig/kubelet <<EOF
+cat <<EOF > /etc/sysconfig/kubelet
 KUBELET_EXTRA_ARGS="--cgroup-driver=systemd"
 EOF
-systemctl enable kubelet
+
+systemctl enable kubelet && systemctl start kubelet
 
 for image in $(kubeadm config images list); do
     if docker history $image > /dev/null 2>&1; then
@@ -25,6 +25,7 @@ if [ $# -gt 0 ]; then
     rm -rf $HOME/.kube && mkdir -p $HOME/.kube
     if [ "$1" == "$ctrl_ip" ] ; then
         kubeadm init --control-plane-endpoint=$ctrl_ip \
+            --apiserver-advertise-address=$ctrl_ip \
             --node-name $(hostname) \
             --pod-network-cidr 10.244.0.0/16 \
             --cri-socket unix:///var/run/cri-dockerd.sock | tee $kubeadm_file

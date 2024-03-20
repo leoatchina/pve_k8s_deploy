@@ -26,7 +26,9 @@ sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables ne
  
 # 如果有防火墙需要参考此文档
 # https://kubernetes.io/docs/reference/networking/ports-and-protocols/
- 
+
+
+# NOTE: 以下, 为了兼容性, 没有使用containerd, 因此也不需要安装了
 # 配置容器运行时 安装 containerd
 # apt-get update -y && apt-get install -y containerd
  
@@ -42,13 +44,14 @@ sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables ne
 # systemctl enable containerd
 # systemctl restart containerd
 # systemctl status containerd
- 
+
+
 # 安装 kubelet/kubeadm/kubectl
 apt-get update -y && apt-get install -y apt-transport-https ca-certificates curl
+apt-get autoremove -y
 curl -fsSL https://mirrors.aliyun.com/kubernetes-new/core/stable/v1.29/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
 echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://mirrors.aliyun.com/kubernetes-new/core/stable/v1.29/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
  
-# 安装 kubelet/kubeadm/kubectl
 apt-get update -y
 apt-get install -y kubelet kubeadm kubectl
 apt-mark hold kubelet kubeadm kubectl  # 固定版本  
