@@ -29,15 +29,15 @@ sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables ne
  
  
 # 配置容器运行时 安装 containerd
-apt-get update -y && apt-get install -y containerd
+# apt-get update -y && apt-get install -y containerd
  
 # 配置 containerd
-mkdir -p /etc/containerd
-containerd config default | tee /etc/containerd/config.toml
+# mkdir -p /etc/containerd
+# containerd config default | tee /etc/containerd/config.toml
  
 # 修改为 SystemdCgroup
-sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
-cat /etc/containerd/config.toml | grep SystemdCgroup
+# sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+# cat /etc/containerd/config.toml | grep SystemdCgroup
  
 # 配置 containerd 服务
 systemctl enable containerd

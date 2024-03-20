@@ -8,7 +8,7 @@ for i in {99..105}; do
     ip="192.168.1.$i"
     echo "Getting SSH key for $ip"
     # 使用SSH连接到主机并获取公钥
-    if [[ $i -eq 99 ]]; then
+    if [ "$i" -eq 99 ]; then
         ssh -o StrictHostKeyChecking=no root@$ip cat ~/.ssh/id_rsa.pub > "$keys_file" 
     else
         ssh -o StrictHostKeyChecking=no root@$ip cat ~/.ssh/id_rsa.pub >> "$keys_file"
