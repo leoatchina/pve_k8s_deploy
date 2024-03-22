@@ -27,22 +27,6 @@ sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables ne
 # 如果有防火墙需要参考此文档
 # https://kubernetes.io/docs/reference/networking/ports-and-protocols/
 
-# NOTE: 以下, 为了兼容性, 没有使用containerd, 因此也不需要安装了
-# 配置容器运行时 安装 containerd
-# apt-get update -y && apt-get install -y containerd
- 
-# 配置 containerd
-# mkdir -p /etc/containerd
-# containerd config default | tee /etc/containerd/config.toml
- 
-# 修改为 SystemdCgroup
-# sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
-# cat /etc/containerd/config.toml | grep SystemdCgroup
- 
-# 配置 containerd 服务
-# systemctl enable containerd
-# systemctl restart containerd
-# systemctl status containerd
 
 
 # 安装 kubelet/kubeadm/kubectl
