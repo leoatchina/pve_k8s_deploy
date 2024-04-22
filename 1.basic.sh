@@ -2,12 +2,16 @@
 sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/mirrors.aliyun.com/g' /etc/apt/sources.list
 sed -i 's/http:\/\/security.ubuntu.com/http:\/\/mirrors.aliyun.com/g' /etc/apt/sources.list
 
+
 timedatectl set-timezone Asia/Shanghai
 apt update -y && apt install -y vim git tmux ripgrep universal-ctags htop build-essential
-apt install -y lua5.3 
-apt install -y sshfs python3-pip net-tools && pip install neovim bat
+apt install -y apt-transport-https ca-certificates curl software-properties-common
+apt install -y lua5.3 nfs-common
+apt install -y sshfs python3-pip python3-venv net-tools && pip install neovim bat
 
-rm /root/.bashrc
+# rm /root/.bashrc
+
+mkdir -p /data
 
 program_exists() {
     local ret='0'
@@ -19,20 +23,19 @@ program_exists() {
     return 0
 }
 
-if program_exists "fzf"; then
-    echo "fzf executable"
-else
-    echo "[ -f ~/.fzf.bash ] && source ~/.fzf.bash" >> ~/.configrc
-fi
-
-
 if [ -d ~/.leovim ]; then
     cd ~/.leovim && git pull
 else
     git clone https://gitee.com/leoatchina/leovim.git ~/.leovim
 fi
-cd ~/.leovim && bash install.sh all
 
+# cd ~/.leovim && bash install.sh all no
+
+# if program_exists "fzf"; then
+#     echo "fzf executable"
+# else
+#     echo "[ -f ~/.fzf.bash ] && source ~/.fzf.bash" >> ~/.configrc
+# fi
 
 if [ $# -gt 0 ] && [ $1 -gt 104 ]; then
     sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication yes/' /etc/ssh/sshd_config

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+apt-key adv --keyserver keyserver.ubuntu.com --recv-keys  B53DC80D13EDEF05
 apt -y install apt-transport-https ca-certificates curl software-properties-common
 
 curl -fsSL https://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | apt-key add -
@@ -22,6 +23,9 @@ cat > /etc/docker/daemon.json << EOF
     ]
 }
 EOF
+
+
+
 
 systemctl enable docker && systemctl start docker && systemctl status docker && docker info | grep systemd
 

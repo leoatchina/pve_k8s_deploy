@@ -1,10 +1,20 @@
 #!/bin/bash
 
+if [ $# -ne 3 ]; then    
+    echo "Error: Exactly 3 arguments are required."
+    exit 1
+fi
+echo "Proceeding with the script..."
+
 keys_file="$HOME/.ssh/keys"
 
-for i in {99..104}; do
-    ip="192.168.1.$i"
-    echo "Getting SSH key for $ip"
+net=$1
+start=$2
+end=$3
+
+
+for i in $(seq $start $end); do
+    ip="$net.$i"
     # 使用SSH连接到主机并获取公钥
     echo "====== Processing key generate on $ip ==============="
     if [ "$i" -eq 99 ]; then
@@ -21,15 +31,19 @@ echo
 # NOTE: 如果直接在下面循环读入keys_file, 会出现只读一行的情况
 mapfile -t keys < <(awk '{print $0}' "$keys_file")
 
-for i in {100..104}; do
-    ip="192.168.1.$i"
+for i in $(seq $start $end); do
+    if [ $i -eq 99 ]; then
+        continue
+    fi
+
+    ip="$net.$i"
+
     echo "====== Processing key add on $ip ==============="
 
     for key in "${keys[@]}"; do
         # Check if the key already exists in the authorized_keys file
         key2=$(echo $key | cut -d' ' -f2)
         # NOTE: 为了解决空格的问题, 把第二个字符串提取出来, ONLY比较这个key2
-        echo $key2
         if ssh -o StrictHostKeyChecking=accept-new root@$ip "grep -qF '$key2' ~/.ssh/authorized_keys"; then
             echo "Key already exists in authorized_keys on $ip"
         else
