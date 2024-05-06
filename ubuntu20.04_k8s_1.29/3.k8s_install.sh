@@ -28,7 +28,6 @@ sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables ne
 # https://kubernetes.io/docs/reference/networking/ports-and-protocols/
 
 
-
 # 安装 kubelet/kubeadm/kubectl
 apt-get update -y && apt-get install -y apt-transport-https ca-certificates curl
 apt-get autoremove -y

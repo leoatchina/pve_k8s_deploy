@@ -7,7 +7,7 @@ timedatectl set-timezone Asia/Shanghai
 apt update -y && apt install -y vim git tmux ripgrep universal-ctags htop build-essential
 apt install -y apt-transport-https ca-certificates curl software-properties-common
 apt install -y lua5.3 nfs-common
-apt install -y sshfs python3-pip python3-venv net-tools && pip install neovim bat
+apt install -y sshfs python3-pip python3-venv net-tools && pip install neovim
 
 # rm /root/.bashrc
 

@@ -29,7 +29,7 @@ echo ========================
 echo 
 
 kubeadm_file=/tmp/kubeadm.txt
-ctrl_ip=192.168.1.100
+ctrl_ip=192.168.2.100
 
 # Check if any arguments are provided to the script
 if [ $# -gt 0 ]; then

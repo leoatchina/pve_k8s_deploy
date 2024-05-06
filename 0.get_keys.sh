@@ -6,31 +6,30 @@ if [ $# -ne 3 ]; then
 fi
 echo "Proceeding with the script..."
 
-keys_file="$HOME/.ssh/keys"
 
 net=$1
 start=$2
 end=$3
 
 
+#
+keys_file="$HOME/.ssh/keys"
+cat ~/.ssh/id_rsa.pub > "$keys_file" 
+
 for i in $(seq $start $end); do
     ip="$net.$i"
     # 使用SSH连接到主机并获取公钥
     echo "====== Processing key generate on $ip ==============="
-    if [ "$i" -eq 99 ]; then
-        cat ~/.ssh/id_rsa.pub > "$keys_file" 
-    else
-        ssh-keygen -f "/root/.ssh/known_hosts" -R "$ip"
-        # ssh root@$ip 
-        ssh -o StrictHostKeyChecking=accept-new root@$ip 'echo "y" | ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""'
-        ssh -o StrictHostKeyChecking=accept-new root@$ip cat ~/.ssh/id_rsa.pub >> "$keys_file"
-    fi
+    ssh-keygen -f "/root/.ssh/known_hosts" -R "$ip"
+    # ssh root@$ip 
+    ssh -o StrictHostKeyChecking=accept-new root@$ip 'echo "y" | ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""'
+    ssh -o StrictHostKeyChecking=accept-new root@$ip cat ~/.ssh/id_rsa.pub >> "$keys_file"
 done
+
 echo 
 
 # NOTE: 如果直接在下面循环读入keys_file, 会出现只读一行的情况
 mapfile -t keys < <(awk '{print $0}' "$keys_file")
-
 for i in $(seq $start $end); do
     if [ $i -eq 99 ]; then
         continue
