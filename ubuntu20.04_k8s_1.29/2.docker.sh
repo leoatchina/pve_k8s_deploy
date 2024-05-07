@@ -1,7 +1,6 @@
 #!/bin/bash
 
 apt-key adv --keyserver keyserver.ubuntu.com --recv-keys  B53DC80D13EDEF05
-apt -y install apt-transport-https ca-certificates curl software-properties-common
 
 curl -fsSL https://mirrors.aliyun.com/docker-ce/linux/ubuntu/gpg | apt-key add -
 
@@ -25,15 +24,13 @@ cat > /etc/docker/daemon.json << EOF
 EOF
 
 
-
-
 systemctl enable docker && systemctl start docker && systemctl status docker && docker info | grep systemd
 
 # 下载安装最新版的cri-dockerd
-wget https://github.com/Mirantis/cri-dockerd/releases/download/v0.3.11/cri-dockerd-0.3.11.amd64.tgz
-tar xf cri-dockerd-0.3.11.amd64.tgz
+wget https://github.com/Mirantis/cri-dockerd/releases/download/v0.3.13/cri-dockerd-0.3.13.amd64.tgz
+tar xf cri-dockerd-0.3.13.amd64.tgz
 mv cri-dockerd/cri-dockerd  /usr/bin/
-rm -rf  cri-dockerd  cri-dockerd-0.3.11.amd64.tgz
+rm -rf cri-dockerd cri-dockerd-0.3.13.amd64.tgz
 
 # 配置启动项
 cat > /etc/systemd/system/cri-docker.service<<EOF

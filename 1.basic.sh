@@ -1,4 +1,8 @@
 #!/bin/bash
+swapoff -a
+sed -ri 's/.*swap.*/#&/' /etc/fstab
+
+
 sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/mirrors.aliyun.com/g' /etc/apt/sources.list
 sed -i 's/http:\/\/security.ubuntu.com/http:\/\/mirrors.aliyun.com/g' /etc/apt/sources.list
 
