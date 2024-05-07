@@ -34,21 +34,19 @@ for i in $(seq $start $end); do
     if [ $i -eq 99 ]; then
         continue
     fi
-
     ip="$net.$i"
-
     echo "====== Processing key add on $ip ==============="
 
     for key in "${keys[@]}"; do
         # Check if the key already exists in the authorized_keys file
         key2=$(echo $key | cut -d' ' -f2)
+        node=$(echo $key | cut -d' ' -f3)
         # NOTE: 为了解决空格的问题, 把第二个字符串提取出来, ONLY比较这个key2
         if ssh -o StrictHostKeyChecking=accept-new root@$ip "grep -qF '$key2' ~/.ssh/authorized_keys"; then
-            echo "Key already exists in authorized_keys on $ip"
+            echo "Key of $node already exists in authorized_keys to $ip"
         else
-            echo "Adding key to authorized_keys on $ip"
+            echo "Adding key of $node to authorized_keys to $ip"
             echo "$key" | ssh -o StrictHostKeyChecking=accept-new root@$ip "cat >> ~/.ssh/authorized_keys"
         fi
-        echo
     done 
 done
