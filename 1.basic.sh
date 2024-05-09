@@ -2,6 +2,14 @@
 swapoff -a
 sed -ri 's/.*swap.*/#&/' /etc/fstab
 
+if [ $# -gt 0 ] && [ $1 -gt 104 ]; then
+    sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication yes/' /etc/ssh/sshd_config
+    sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication yes/' /etc/ssh/sshd_config.d/*
+    sed -i 's/^#\?PubkeyAuthentication .*/PubkeyAuthentication yes/' /etc/ssh/sshd_config
+    sed -i 's/^#\?PermitRootLogin .*/PermitRootLogin yes/' /etc/ssh/sshd_config
+    systemctl restart sshd
+    echo "sshd Done"
+fi
 
 sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/mirrors.aliyun.com/g' /etc/apt/sources.list
 sed -i 's/http:\/\/security.ubuntu.com/http:\/\/mirrors.aliyun.com/g' /etc/apt/sources.list
@@ -31,21 +39,4 @@ if [ -d ~/.leovim ]; then
     cd ~/.leovim && git pull
 else
     git clone https://gitee.com/leoatchina/leovim.git ~/.leovim
-fi
-
-# cd ~/.leovim && bash install.sh all no
-
-# if program_exists "fzf"; then
-#     echo "fzf executable"
-# else
-#     echo "[ -f ~/.fzf.bash ] && source ~/.fzf.bash" >> ~/.configrc
-# fi
-
-if [ $# -gt 0 ] && [ $1 -gt 104 ]; then
-    sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication yes/' /etc/ssh/sshd_config
-    sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication yes/' /etc/ssh/sshd_config.d/*
-    sed -i 's/^#\?PubkeyAuthentication .*/PubkeyAuthentication yes/' /etc/ssh/sshd_config
-    sed -i 's/^#\?PermitRootLogin .*/PermitRootLogin yes/' /etc/ssh/sshd_config
-    systemctl restart sshd
-    echo "sshd Done"
 fi

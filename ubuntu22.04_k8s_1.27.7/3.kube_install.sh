@@ -38,7 +38,6 @@ sysctl net.bridge.bridge-nf-call-iptables net.bridge.bridge-nf-call-ip6tables ne
 # 如果有防火墙需要参考此文档
 # https://kubernetes.io/docs/reference/networking/ports-and-protocols/
 
-
 # 安装 kubelet/kubeadm/kubectl
 apt-get autoremove -y
 curl -fsSL https://mirrors.aliyun.com/kubernetes-new/core/stable/v1.27/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
@@ -47,6 +46,4 @@ echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://mirro
 apt-get update -y
 # apt-get remove kubelet kubeadm kubectl -y
 apt-get install -y kubelet=1.27.7-1.1 kubeadm=1.27.7-1.1 kubectl=1.27.7-1.1
-
-# apt-mark hold kubelet kubeadm kubectl  # 固定版本
 

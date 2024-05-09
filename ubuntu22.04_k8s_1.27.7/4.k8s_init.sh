@@ -13,7 +13,6 @@ echo 'KUBELET_EXTRA_ARGS="--cgroup-driver=systemd"' > /etc/default/kubelet
 # systemctl enable kubelet && systemctl restart kubelet && systemctl status kubelet
 
 
-
 # Get the list of required container images for the cluster
 images=$(kubeadm config images list)
 
@@ -22,18 +21,18 @@ for image in $images
 do
     echo $image
 done
+echo
+
 echo ===== images exist =====
 # List the existing Docker images
 docker images | awk 'NR>1 {print $1":"$2}'
 echo ========================
 echo
 
-kubeadm_file=/tmp/kubeadm.txt
-ctrl_ip=192.168.2.100
-
 
 # Check if any arguments are provided to the script
 if [ $# -gt 0 ]; then
+    kubeadm_file=/tmp/kubeadm.txt
     if [ $# -gt 1 ]; then
         ctrl_ip=$2
     else
@@ -88,22 +87,21 @@ if [ $# -gt 0 ]; then
             --service-cidr=10.96.0.0/12 \
             --pod-network-cidr 10.244.0.0/16 \
             --cri-socket unix:///var/run/cri-dockerd.sock | tee $kubeadm_file
+        cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
     else
         echo ======== work node join =========
         # Initialize a worker node
         ssh-keygen -f "/root/.ssh/known_hosts" -R $ctrl_ip
         scp -o StrictHostKeyChecking=accept-new root@$ctrl_ip:$kubeadm_file /tmp
-    fi
 
-    if [ "$1" == "$ctrl_ip" ] ; then
-        cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
-        # chown $(id -u):$(id -g) $HOME/.kube/config
-    else
         # Join the worker node to the control node
         token=$(grep 'kubeadm join' $kubeadm_file | sed -n -e 's/^.*--token \(\S*\).*$/\1/p' | tail -1)
         discovery_token_ca_cert_hash=$(grep 'discovery\-token\-ca\-cert\-hash' $kubeadm_file | sed -n -e 's/^.*--discovery-token-ca-cert-hash \(\S*\).*$/\1/p' | tail -1)
+
         rm $kubeadm_file
+
         cmd="kubeadm join $ctrl_ip:6443 --token $token --discovery-token-ca-cert-hash $discovery_token_ca_cert_hash --cri-socket=unix:///var/run/cri-dockerd.sock"
+
         $cmd
         scp -o StrictHostKeyChecking=accept-new root@$ctrl_ip:/etc/kubernetes/admin.conf $HOME/.kube/config
         # chown $(id -u):$(id -g) $HOME/.kube/config
