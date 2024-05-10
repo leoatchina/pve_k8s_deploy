@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ $# -ne 3 ]; then    
-    echo "Error: Exactly 3 arguments are required."
+    echo "you should offer net/startnumber/endnumber"
     exit 1
 fi
 echo "Proceeding with the script..."
