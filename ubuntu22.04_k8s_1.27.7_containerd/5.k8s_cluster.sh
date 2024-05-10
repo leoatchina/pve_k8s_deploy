@@ -27,7 +27,7 @@ if [ $# -eq 2 ]; then
         kubeadm init \
             --apiserver-advertise-address=$ctrl_ip \
             --node-name $(hostname) \
-            --kubernetes-version v1.27.7 \
+            --kubernetes-version v1.27.13 \
             --service-cidr=10.96.0.0/12 \
             --pod-network-cidr 10.244.0.0/16 | tee $kubeadm_file
         cp -f /etc/kubernetes/admin.conf $HOME/.kube/config

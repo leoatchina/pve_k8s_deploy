@@ -36,8 +36,9 @@ echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://mirro
  
 apt-get update -y
 # apt-get remove kubelet kubeadm kubectl -y
-apt-get install -y kubelet=1.27.7-1.1 kubeadm=1.27.7-1.1 kubectl=1.27.7-1.1
+apt-get install -y --allow-downgrades kubelet kubeadm kubectl
 
 echo 'KUBELET_EXTRA_ARGS="--cgroup-driver=systemd"' > /etc/default/kubelet
 
 systemctl restart kubelet
+reboot
