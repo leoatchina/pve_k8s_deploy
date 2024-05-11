@@ -51,3 +51,4 @@ for image in $images; do
     fi
 done
 
+crictl config runtime-endpoint unix:///var/run/containerd/containerd.sock

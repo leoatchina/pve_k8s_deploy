@@ -21,19 +21,8 @@ apt install -y apt-transport-https ca-certificates curl software-properties-comm
 apt install -y lua5.3 nfs-common
 apt install -y sshfs python3-pip python3-venv net-tools && pip install neovim
 
-# rm /root/.bashrc
-
 mkdir -p /data
 
-program_exists() {
-    local ret='0'
-    command -v $1 >/dev/null 2>&1 || { local ret='1'; }
-    # fail on non-zero return value
-    if [ "$ret" -ne 0 ]; then
-        return 1
-    fi
-    return 0
-}
 
 if [ -d ~/.leovim ]; then
     cd ~/.leovim && git pull

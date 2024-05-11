@@ -1,13 +1,5 @@
 #!/bin/bash
 
-# 下载安装最新版的cri-dockerd
-# wget https://github.com/Mirantis/cri-dockerd/releases/download/v0.3.13/cri-dockerd-0.3.13.amd64.tgz
-wget https://github.com/Mirantis/cri-dockerd/releases/download/v0.3.13/cri-dockerd_0.3.13.3-0.ubuntu-jammy_amd64.deb -O /tmp/cri-dockerd.deb
-dpkg -i /tmp/cri-dockerd.deb
-
-
-sed -i 's#^ExecStart=.*$#ExecStart=/usr/local/bin/cri-dockerd --container-runtime-endpoint fd:// --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.9#' /usr/lib/systemd/system/cri-docker.service
-systemctl start cri-docker && systemctl status cri-docker
 
 
 cat << EOF | tee /etc/modules-load.d/k8s.conf
@@ -45,5 +37,5 @@ echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://mirro
  
 apt-get update -y
 # apt-get remove kubelet kubeadm kubectl -y
-apt-get install -y kubelet=1.27.7-1.1 kubeadm=1.27.7-1.1 kubectl=1.27.7-1.1
+apt-get install -y kubelet kubeadm kubectl
 

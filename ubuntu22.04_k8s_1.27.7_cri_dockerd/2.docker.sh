@@ -28,4 +28,13 @@ cat > /etc/docker/daemon.json << EOF
 EOF
 
 systemctl enable docker && systemctl start docker
+
+# 下载安装最新版的cri-dockerd
+# wget https://github.com/Mirantis/cri-dockerd/releases/download/v0.3.13/cri-dockerd-0.3.13.amd64.tgz
+wget https://github.com/Mirantis/cri-dockerd/releases/download/v0.3.13/cri-dockerd_0.3.13.3-0.ubuntu-jammy_amd64.deb -O /tmp/cri-dockerd.deb
+dpkg -i /tmp/cri-dockerd.deb
+sed -i 's#^ExecStart=.*$#ExecStart=/usr/local/bin/cri-dockerd --container-runtime-endpoint fd:// --pod-infra-container-image=registry.aliyuncs.com/google_containers/pause:3.9#' /usr/lib/systemd/system/cri-docker.service
+systemctl start cri-docker && systemctl status cri-docker
+
+
 reboot

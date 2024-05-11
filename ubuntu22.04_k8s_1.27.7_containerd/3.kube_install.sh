@@ -38,7 +38,8 @@ apt-get update -y
 # apt-get remove kubelet kubeadm kubectl -y
 apt-get install -y --allow-downgrades kubelet kubeadm kubectl
 
-echo 'KUBELET_EXTRA_ARGS="--cgroup-driver=systemd"' > /etc/default/kubelet
+echo "" > /etc/default/kubelet
+# echo 'KUBELET_EXTRA_ARGS="--cgroup-driver=systemd"' > /etc/default/kubelet
 
 systemctl restart kubelet
 reboot

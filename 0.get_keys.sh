@@ -22,7 +22,7 @@ for i in $(seq $start $end); do
     echo "====== Processing key generate on $ip ==============="
     ssh-keygen -f "/root/.ssh/known_hosts" -R "$ip"
     # ssh root@$ip 
-    ssh -o StrictHostKeyChecking=accept-new root@$ip 'echo "y" | ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""'
+    ssh -o StrictHostKeyChecking=accept-new root@$ip '[ ! -f "$HOME/.ssh/id_rsa" ] && echo "y" | ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""'
     ssh -o StrictHostKeyChecking=accept-new root@$ip cat ~/.ssh/id_rsa.pub >> "$keys_file"
 done
 
