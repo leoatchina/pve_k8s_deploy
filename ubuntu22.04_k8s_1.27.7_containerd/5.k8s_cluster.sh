@@ -44,6 +44,25 @@ if [ $# -eq 2 ]; then
         scp -o StrictHostKeyChecking=accept-new root@$ctrl_ip:/etc/kubernetes/admin.conf $HOME/.kube/config
         # chown $(id -u):$(id -g) $HOME/.kube/config
     fi
+
+    sed -i 's#--network-plugin=cni##' /var/lib/kubelet/kubeadm-flags.env
+
+    mkdir -p /etc/cni/net.d
+
+
+    cat > /etc/cni/net.d/10-flannel.conf <<EOF
+{
+  "name": "cbr0",
+  "cniVersion": "0.2.0",
+  "type": "flannel",
+  "delegate": {
+    "isDefaultGateway": true
+  }
+} 
+EOF
+
+    systemctl restart kubelet
+
 else
     echo "you should offer ip && ctrl_ip."
 fi
