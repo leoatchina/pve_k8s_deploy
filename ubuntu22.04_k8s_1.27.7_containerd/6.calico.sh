@@ -7,4 +7,3 @@ if [ $# -ne 1 ]; then
 fi
 ip=$1
 scp ./calico.yaml root@$ip:/tmp && ssh -o StrictHostKeyChecking=no root@$ip 'kubectl apply -f /tmp/calico.yaml'
-
