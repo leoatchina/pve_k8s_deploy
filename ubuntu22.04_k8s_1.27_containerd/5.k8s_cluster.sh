@@ -26,10 +26,10 @@ if [ $# -eq 2 ]; then
         rm -rf /etc/kubernetes/manifests/*
         kubeadm init \
             --apiserver-advertise-address=$ctrl_ip \
-            --node-name $(hostname) \
-            --kubernetes-version $version \
+            --node-name=$(hostname) \
+            --kubernetes-version=$version \
             --service-cidr=10.96.0.0/12 \
-            --pod-network-cidr 10.244.0.0/16 | tee $kubeadm_file
+            --pod-network-cidr=10.244.0.0/16 | tee $kubeadm_file
         cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
         # flannel net Initialize
         rm /tmp/kube-flannel.yml
