@@ -18,13 +18,14 @@
 这个脚本是进行ssh 互信, 操作逻辑
 - 先在各ip上生成相应的`~/.ssh/id_rsa.pub`, 并连同宿主机的`id_rsa.pub`一起生成一个key文件
 - 再检查各个ip的`~/.ssh/authorized_keys`,  如上述各机器的key不在其中, 则加入之.
-- 执行, 要加上三个参数:ip前三段, 开始ip第四段, 终于ip第四段
->  bash ./0.get_keys.sh 192.168.2  150 154
+- 执行, 要加上三个参数:ip前三段, 开始ip第四段, 终止ip第四段
+
+> bash ./0.get_keys.sh 192.168.2  150 154
 
 # ./1.basic.sh 
-安装通用的软件
+安装通用的软件, 可以使用for循环在各个ip上, 使用ssh并传入脚本进行命令执行.
+
 > for i in $(seq 150 154);do ip=192.168.2.$i;echo "== $ip ==";ssh -o StrictHostKeyChecking=no root@$ip 'bash -s' < 1.basic.sh; done 
 
-
 # 其他操作
-打开相应的目录看readme
+打开相应的目录查看README
