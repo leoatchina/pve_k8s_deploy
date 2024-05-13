@@ -23,9 +23,9 @@
 > bash ./0.get_keys.sh 192.168.2  150 154
 
 # [1.basic.sh](./1.basic.sh) 
-安装通用的软件, 可以使用for循环在各个ip上, 使用ssh并传入脚本进行命令执行.
+安装通用的软件, 可以使用for循环在各个ip上, 使用ssh并传入脚本进行命令执行, 可以传ip第四段, 这样可以放宽 sshd 限制方便登陆.
 
-> for i in $(seq 150 154);do ip=192.168.2.$i;echo "== $ip ==";ssh -o StrictHostKeyChecking=no root@$ip 'bash -s' < 1.basic.sh; done 
+> for i in $(seq 150 154);do ip=192.168.2.$i;echo "== $ip ==";ssh -o StrictHostKeyChecking=no root@$ip 'bash -s' < 1.basic.sh $i; done 
 
 # 其他操作
 打开相应的目录查看README
