@@ -22,8 +22,8 @@ done
 echo
 
 echo ===== images exist =====
-# List the existing Docker images
-docker images | awk 'NR>1 {print $1":"$2}'
+# List the existing images
+ctr image list | awk 'NR>1 {print $1":"$2}'
 echo ========================
 
 max_retries=3

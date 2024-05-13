@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# This script installs and configures containerd, a container runtime, on Ubuntu 22.04.
-
 # Update the package list
 apt update -y
 
@@ -22,9 +20,10 @@ sed -i "s#registry.k8s.io/pause:3.8#registry.aliyuncs.com/google_containers/paus
 sed -i "s#SystemdCgroup = false#SystemdCgroup = true#g" $fl
 
 # Modify the configuration file to specify the path for containerd certificates
+# awk is used to local the line need to Modify, and `sed -i` to replace
 awk '/\[plugins."io.containerd.grpc.v1.cri".registry\]/{print NR+1}' $fl | xargs -I{} sed -i '{}s#config_path = ""#config_path = "/etc/containerd/certs.d"#' $fl
 
-# docker hub镜像加速
+# docker.io 镜像加速
 mkdir -p /etc/containerd/certs.d/docker.io
 cat > /etc/containerd/certs.d/docker.io/hosts.toml << EOF
 server = "https://docker.io"
