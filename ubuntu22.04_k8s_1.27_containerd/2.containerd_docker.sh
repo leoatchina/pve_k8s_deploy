@@ -143,8 +143,6 @@ add-apt-repository "deb [arch=amd64] https://mirrors.aliyun.com/docker-ce/linux/
 apt update -y
 
 apt -y update && apt install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose
-# apt -y update && apt install -y docker-ce=5:26.0.0-1 docker-ce-cli containerd.io docker-buildx-plugin docker-compose
-# apt -y update && apt install -y docker-ce=5:26 docker-ce-cli containerd.io docker-buildx-plugin docker-compose
 
 mkdir -p /etc/docker
 

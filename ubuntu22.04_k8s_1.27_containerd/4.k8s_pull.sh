@@ -29,29 +29,31 @@ echo ========================
 max_retries=3
 for image in $images; do
     retry=0
-    # Check if the image is already pulled on the specified node
-    if [ -z `docker images -q $image` ]; then
-        echo "==== Image $image not pulled on $ip ===="
-        while [ $retry -lt $max_retries ]
-        do
-            if docker pull $image; then
-                echo "Docker pull succeeded."
-                break
-            else
-                retry=$((retry+1))
-                echo "Docker pull failed, retrying ($retry/$max_retries)..."
-                sleep $retry
-            fi
-        done
 
-        if [ $retry -ge $max_retries ]; then
-            echo "Docker pull failed after $max_retries attempts."
-            exit 1
+    # Check if the image is already pulled on the specified node
+    echo "==== pulling $image ===="
+    while [ $retry -lt $max_retries ]
+    do
+        if ctr image pull "$image"; then
+            if [ $retry -eq 0 ]; then
+                echo "$image already pulled."
+            else
+                echo "$image pull succeeded."
+            fi
+            break
+        else
+            retry=$((retry+1))
+            echo "image pull failed, retrying ($retry/$max_retries)..."
+            sleep $retry
         fi
-    else
-        echo "==== Image $image already pulled on $ip ===="
+    done
+
+    if [ $retry -ge $max_retries ]; then
+        echo "image pull failed after $max_retries attempts."
+        exit 1
     fi
 done
+
 
 
 crictl config runtime-endpoint unix:///var/run/containerd/containerd.sock
