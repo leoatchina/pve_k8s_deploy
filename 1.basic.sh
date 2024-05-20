@@ -14,15 +14,28 @@ fi
 sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/mirrors.aliyun.com/g' /etc/apt/sources.list
 sed -i 's/http:\/\/security.ubuntu.com/http:\/\/mirrors.aliyun.com/g' /etc/apt/sources.list
 
-
 timedatectl set-timezone Asia/Shanghai
-apt update -y && apt install -y vim git tmux ripgrep universal-ctags htop build-essential
+apt update -y 
+apt install -y libevent-dev ncurses-dev bison pkg-config build-essential
+apt install -y vim git ripgrep universal-ctags htop
 apt install -y apt-transport-https ca-certificates curl software-properties-common
-apt install -y lua5.3 nfs-common
-apt install -y sshfs python3-pip python3-venv net-tools && pip install neovim
+apt install -y lua5.3 nfs-common net-tools sshfs
 
-mkdir -p /data
 
+# tmux
+mkdir -p ~/.local && rm /tmp/tmux-3.4.tar.gz
+cd /tmp && wget https://github.com/tmux/tmux/releases/download/3.4/tmux-3.4.tar.gz && \
+    tar xvf tmux-3.4.tar.gz && cd tmux-3.4 && ./configure --prefix=/usr && make && make install
+
+apt install -y python3-pip python3-venv && pip install neovim
+
+mkdir -p /data/nfs
+
+cat << EOF | tee ~/.vimrc.test
+if has('nvim')
+    source ~/.leovim/boostup/init.vim
+endif
+EOF
 
 if [ -d ~/.leovim ]; then
     cd ~/.leovim && git pull
