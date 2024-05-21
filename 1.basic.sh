@@ -17,7 +17,7 @@ sed -i 's/http:\/\/security.ubuntu.com/http:\/\/mirrors.aliyun.com/g' /etc/apt/s
 timedatectl set-timezone Asia/Shanghai
 apt update -y 
 apt install -y libevent-dev ncurses-dev bison pkg-config build-essential
-apt install -y vim git ripgrep universal-ctags htop
+apt install -y vim git ripgrep universal-ctags htop zip unip
 apt install -y apt-transport-https ca-certificates curl software-properties-common
 apt install -y lua5.3 nfs-common net-tools sshfs
 
