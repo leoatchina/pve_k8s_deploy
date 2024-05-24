@@ -17,33 +17,40 @@ sed -i 's/http:\/\/security.ubuntu.com/http:\/\/mirrors.aliyun.com/g' /etc/apt/s
 timedatectl set-timezone Asia/Shanghai
 apt update -y 
 apt install -y libevent-dev ncurses-dev bison pkg-config build-essential
-apt install -y vim git ripgrep universal-ctags htop zip unip
+apt install -y vim git ripgrep universal-ctags htop zip unzip
 apt install -y apt-transport-https ca-certificates curl software-properties-common
 apt install -y lua5.3 nfs-common net-tools sshfs
+apt install -y python3-pip python3-venv && pip install neovim
+
+# tmux
+if [ ! -f /usr/bin/tmux ]; then
+    [ -f /tmp/tmux-3.4.tar.gz ] && rm /tmp/tmux-3.4.tar.gz
+    cd /tmp && wget https://github.com/tmux/tmux/releases/download/3.4/tmux-3.4.tar.gz && \
+        tar xvf tmux-3.4.tar.gz && cd tmux-3.4 && ./configure --prefix=/usr && make -j 4 && make install
+fi
+
+# go
+if [ ! -f /root/go/bin/go ]; then
+    [ -f /root/go1.21.9.linux-amd64.tar.gz ] && rm /root/go1.21.9.linux-amd64.tar.gz
+    cd /root && wget https://go.dev/dl/go1.21.9.linux-amd64.tar.gz
+    tar xvf go1.21.9.linux-amd64.tar.gz
+    rm /root/go1.21.9.linux-amd64.tar.gz
+fi
 
 
 mkdir -p /data/nfs
-# tmux
-mkdir -p ~/.local && rm /tmp/tmux-3.4.tar.gz
-cd /tmp && wget https://github.com/tmux/tmux/releases/download/3.4/tmux-3.4.tar.gz && \
-    tar xvf tmux-3.4.tar.gz && cd tmux-3.4 && ./configure --prefix=/usr && make && make install
-
-apt install -y python3-pip python3-venv && pip install neovim
-
-
+# leovim
+mkdir -p /root/.local
 cat << EOF | tee ~/.vimrc.local
 if has('nvim')
     source ~/.leovim/conf.d/init.vim
 endif
 EOF
-
 if [ -d ~/.leovim ]; then
     cd ~/.leovim && git pull
 else
     git clone https://gitee.com/leoatchina/leovim.git ~/.leovim
 fi
 
-rm /root/go1.21.9.linux-amd64.tar.gz
-cd /root 
-wget https://go.dev/dl/go1.21.9.linux-amd64.tar.gz
-tar xvf go1.21.9.linux-amd64.tar.gz
+# reboot
+reboot
