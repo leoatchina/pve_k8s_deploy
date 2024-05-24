@@ -22,6 +22,7 @@ apt install -y apt-transport-https ca-certificates curl software-properties-comm
 apt install -y lua5.3 nfs-common net-tools sshfs
 
 
+mkdir -p /data/nfs
 # tmux
 mkdir -p ~/.local && rm /tmp/tmux-3.4.tar.gz
 cd /tmp && wget https://github.com/tmux/tmux/releases/download/3.4/tmux-3.4.tar.gz && \
@@ -29,11 +30,10 @@ cd /tmp && wget https://github.com/tmux/tmux/releases/download/3.4/tmux-3.4.tar.
 
 apt install -y python3-pip python3-venv && pip install neovim
 
-mkdir -p /data/nfs
 
-cat << EOF | tee ~/.vimrc.test
+cat << EOF | tee ~/.vimrc.local
 if has('nvim')
-    source ~/.leovim/boostup/init.vim
+    source ~/.leovim/conf.d/init.vim
 endif
 EOF
 
@@ -42,3 +42,8 @@ if [ -d ~/.leovim ]; then
 else
     git clone https://gitee.com/leoatchina/leovim.git ~/.leovim
 fi
+
+rm /root/go1.21.9.linux-amd64.tar.gz
+cd /root 
+wget https://go.dev/dl/go1.21.9.linux-amd64.tar.gz
+tar xvf go1.21.9.linux-amd64.tar.gz
