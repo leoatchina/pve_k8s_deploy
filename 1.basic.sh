@@ -30,12 +30,12 @@ if [ ! -f /usr/bin/tmux ]; then
 fi
 
 # go
-if [ ! -f /root/go/bin/go ]; then
-    [ -f /root/go1.21.9.linux-amd64.tar.gz ] && rm /root/go1.21.9.linux-amd64.tar.gz
-    cd /root && wget https://go.dev/dl/go1.21.9.linux-amd64.tar.gz
-    tar xvf go1.21.9.linux-amd64.tar.gz
-    rm /root/go1.21.9.linux-amd64.tar.gz
-fi
+# if [ ! -f /root/go/bin/go ]; then
+#     [ -f /root/go1.21.9.linux-amd64.tar.gz ] && rm /root/go1.21.9.linux-amd64.tar.gz
+#     cd /root && wget https://go.dev/dl/go1.21.9.linux-amd64.tar.gz
+#     tar xvf go1.21.9.linux-amd64.tar.gz
+#     rm /root/go1.21.9.linux-amd64.tar.gz
+# fi
 
 
 mkdir -p /data/nfs
@@ -53,4 +53,3 @@ else
 fi
 
 # reboot
-reboot
