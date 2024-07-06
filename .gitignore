@@ -28,6 +28,7 @@ core.[0-9]*
 *.tasks.ini
 *.tasks
 *DS_Store
+*.template
 
 # 文件夹
 build/
