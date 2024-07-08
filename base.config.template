@@ -1,27 +1,31 @@
-masterid="100"
+# 主控制vm id
+masterid="300"
 
-# 过滤IP段
+# IP段
 ip_segment="192.168.1"
 
+
+# k8s相关
 k8s_version="v1.27"
 kube_version=${k8s_version/v/}
 
 
-# 集群所有节点ID，有几台填几台
-
+# 所有节点ID，有几台填几台
 ids=(
-    100
-    101
-    102
-    103
-    104
+    300
+    301
+    302
+    303
+    304
 )
 
+# 不加入到集群的id
 no_ids=(
-    105
-    106
+    305
+    306
 )
 
+# 虚拟机相关的网络等
 gateway=192.168.1.253
 nameserver=192.168.1.1
 searchdomain=192.168.1.1
@@ -32,6 +36,7 @@ service_cidr="10.96.0.0/12"
 pod_network_cidr="10.244.0.0/16"
 
 
+# vm机器， kubelet 和containerd 使用的代理
 http_proxy="http://127.0.0.1:7890"
 https_proxy="https://127.0.0.1:7890"
 no_proxy="192.168.0.0/16,10.244.0.0/16,127.0.0.1,10.0.0.0/8,172.16.0.0/12,localhost"

@@ -1,31 +1,33 @@
+# PVE系统k8s集群搭建
 
-# 说明
-
-## 环境
-这个项目是在内部的pve系统上，对已经安装的vm进行操作，并进行k8s集群布置的脚本, 典型配置如下
-
+## 说明
+这个项目是在内部的`pve系统`上，对已经安装的vm虚拟机操作，进行k8s集群布置的脚本, 典型配置如下
 - 宿主机IP: 192.168.2.99
 - 操作系统: ubuntu20.04/ubuntu22.04
 - DNS: 192.168.1.1
+- 下面的`vm`指pve里的虚拟机
 
-
-## 注意点
+## 大概流程
 - 在宿主机上按说明进行脚本的执行
+- 按数字次序依次执行
 - 在各个脚本中, 使用了一定量的shell 脚本的 `搜索`/`替换` 技巧, 请打开对应文件查看
-- 不同的子目录为不同的系统环境下的操作说明
 
-# [0.get_keys.sh](./0.get_keys.sh)
-这个脚本是进行ssh 互信, 操作逻辑
-- 先在各ip上生成相应的`~/.ssh/id_rsa.pub`, 并连同宿主机的`id_rsa.pub`一起生成一个key文件
-- 再检查各个ip的`~/.ssh/authorized_keys`,  如上述各机器的key不在其中, 则加入之.
-- 执行, 要加上三个参数:ip前三段, 开始ip第四段, 终止ip第四段
+## [base.config.template](./base.config.template)
+- 首先要把base.config.template复制成base.config
+- 打开base.config, 根据说明进行修改
+- 会依次根据ids里的内容生成vm
+  - vm的ip会是 $ip_segment.$id, 比如 ip_segment=192.168.1 , id=200，最后生成的vm ip就是192.168.1.200
+  - 代理部分是给vm的kubelet 和containerd的service等挂上的代理，要预先在局域网内搞好
 
-> bash ./0.get_keys.sh 192.168.2  150 154
+## [0.vm_sshkey.sh](./0.vm_sshkey.sh)
+进行vm 删除， 生成， ssh互信的操作
 
-# [1.basic.sh](./1.basic.sh) 
-安装通用的软件, 可以使用for循环在各个ip上, 使用ssh并传入脚本进行命令执行, 可以传ip第四段, 这样可以放宽 sshd 限制方便登陆.
+- 首先根据`base.config`的`ids`内容， 先检查对应id的`vm`的是否存在， 如不存在则生成(默认ubuntu22.04), 再设置网络
+- 在每个`vm`上生成`sshkey`
+- 把宿主机的sshkey和上面生成的key都复制到每个机器上，做好ssh互信
 
-> for i in $(seq 150 154);do ip=192.168.2.$i;echo "== $ip ==";ssh -o StrictHostKeyChecking=no root@$ip 'bash -s' < 1.basic.sh $i; done 
+## [1.install_software.sh](./1.install_software.sh)
+在和每台机器上安装基本软件、特定版本containerd(根据base.config)、kubeadm/kubectl/kubelet、设置服务代理、并且pull基础镜像
 
-# 其他操作
-打开相应的目录查看README
+## [2.k8s_cluster.sh](./2.k8s_cluster.sh)
+进行k8s组网， 其中放在 `no_ids`里的vm不会加入到k8s集群里
