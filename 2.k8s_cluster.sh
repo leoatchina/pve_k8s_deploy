@@ -20,17 +20,21 @@ k8s_cluster () {
     if [[ $(systemctl is-active kubelet) =~ ^activ ]]; then
         error "== $ip Kubelet service is running =="
         echo "y" | kubeadm reset
-        rm -rf $HOME/.kube && mkdir -p $HOME/.kube
-        rm -rf /etc/cni/net.d
-        rm -rf /etc/kubernetes/manifests
     else
         warn "== $ip Kubelet service is not running =="
-        rm -rf /etc/kubernetes/kubelet.conf
-        rm -rf /etc/kubernetes/pki/ca.crt
     fi
 
-    kubeadm_file=/tmp/kubeadm.txt
+    rm -rf /etc/kubernetes/kubelet.conf
+    rm -rf /etc/kubernetes/pki/ca.crt
+    rm -rf /etc/cni/net.d
+    rm -rf /etc/kubernetes/manifests
+    rm -rf /var/lib/etcd/*
+
     mkdir -p /etc/cni/net.d /etc/kubernetes/manifests
+    rm -rf $HOME/.kube && mkdir -p $HOME/.kube
+
+    # record install infomation
+    kubeadm_file=/tmp/kubeadm.txt
 
     if [ "$ip" == "$ctrl_ip" ] ; then
         nodes=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
@@ -71,19 +75,12 @@ k8s_cluster () {
 
         # flannel net Initialize
         # kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
-        kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
         # sed -i "s#docker.io#docker.m.daocloud.io#g" /tmp/kube-flannel.yml
         # kubectl apply -f /tmp/kube-flannel.yml
 
         # calico
         # bash_path=$(cd "$(dirname "$0")";pwd)
         # echo $bash_path
-        # cd /tmp && wget https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/custom-resources.yaml -O /tmp/custom-resources.yaml
-        # cd /tmp && wget https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/tigera-operator.yaml -O /tmp/tigera-operator.yaml
-        # sed -i 's/name: default/name: kube-system/g' /tmp/custom-resources.yaml
-        # sed -i 's/192.168.0.0/10.244.0.0/g' /tmp/custom-resources.yaml
-
-        # kubectl apply -f /tmp/custom-resources.yaml
     else
         info ======== work node $ip join $ctrl_ip =========
         # Initialize a worker node
@@ -97,19 +94,6 @@ k8s_cluster () {
         scp -o StrictHostKeyChecking=accept-new root@$ctrl_ip:/etc/kubernetes/admin.conf $HOME/.kube/config
     fi
 
-    sed -i 's#--network-plugin=cni##' /var/lib/kubelet/kubeadm-flags.env
-
-
-    cat > /etc/cni/net.d/10-flannel.conf <<EOF
-{
-  "name": "cbr0",
-  "cniVersion": "0.2.0",
-  "type": "flannel",
-  "delegate": {
-    "isDefaultGateway": true
-  }
-}
-EOF
 }
 
 
@@ -125,7 +109,37 @@ for id in ${ids[@]}; do
 
     ip=$ip_segment.$id
 
-    echo
     ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f k8s_cluster warn info error); k8s_cluster $ip $ctrl_ip $service_cidr $pod_network_cidr"
 
+done
+
+
+# =============================
+# 在contral node 上设置 cni 
+# =============================
+calico () {
+    pod_network_cidr=$1
+    kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/tigera-operator.yaml
+
+    wget https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/custom-resources.yaml -O /tmp/custom-resources.yaml
+    sed -i "s#192.168.0.0/16#$pod_network_cidr#g" /tmp/custom-resources.yaml
+    kubectl apply -f /tmp/custom-resources.yaml
+}
+
+# apply on control ip
+ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f calico); calico $pod_network_cidr"
+
+
+# =============================
+# reboot
+# =============================
+for id in ${ids[@]}; do
+    if [[ "${no_ids[@]}" =~ "${id}" ]]; then
+        warn $id not join k8s cluster
+        continue
+    fi
+
+    ip=$ip_segment.$id
+
+    ssh -o StrictHostKeyChecking=no root@$ip "reboot  "
 done

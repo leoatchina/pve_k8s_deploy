@@ -183,7 +183,6 @@ pull_image () {
     max_retries=3
 
     # 正式pull
-
     for image in $images; do
         retry=0
         # Check if the image is already pulled on the specified node
@@ -245,5 +244,10 @@ for id in ${ids[@]}; do
     echo
     info "====== K8s pull on $ip ======"
     ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f pull_image); pull_image "
+
+    # NOTE: 这一步非常重要
+    echo
+    info "====== rebooting $ip ======"
+    ssh -o StrictHostKeyChecking=no root@$ip "reboot "
 
 done
