@@ -4,10 +4,10 @@ bash_path=$(cd "$(dirname "$0")";pwd)
 source $bash_path/util.sh
 
 keys_file="$HOME/.ssh/keys"
-cat ~/.ssh/id_rsa.pub > "$keys_file" 
+cat ~/.ssh/id_rsa.pub > "$keys_file"
 
 # ================================================
-# delete vm 
+# delete vm
 # ================================================
 
 for id in ${ids[@]}; do
@@ -65,10 +65,12 @@ for id in ${ids[@]}; do
     # 使用SSH连接到主机并获取公钥
     info "====== Processing key generate on $ip ==============="
     ssh-keygen -f "/root/.ssh/known_hosts" -R "$ip"
-    # ssh root@$ip 
+    # ssh root@$ip
     ssh -o StrictHostKeyChecking=accept-new root@$ip '[ ! -f "$HOME/.ssh/id_rsa" ] && echo "y" | ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""'
     ssh -o StrictHostKeyChecking=accept-new root@$ip cat ~/.ssh/id_rsa.pub >> "$keys_file"
 
+
+    # 110 之前的机器，都不允许 ssh password
     if [ $id -gt 110 ] ; then
         sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication yes/' /etc/ssh/sshd_config
         sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication yes/' /etc/ssh/sshd_config.d/*
@@ -108,5 +110,5 @@ for id in ${ids[@]}; do
             info "Adding key of $node to authorized_keys on $ip"
             echo "$key" | ssh -o StrictHostKeyChecking=accept-new root@$ip "cat >> ~/.ssh/authorized_keys"
         fi
-    done 
+    done
 done

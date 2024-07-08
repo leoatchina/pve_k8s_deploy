@@ -6,7 +6,7 @@ source $bash_path/util.sh
 
 
 # ================================================
-# install_softwares 
+# install_softwares
 # ================================================
 install_softwares() {
     swapoff -a
@@ -16,7 +16,7 @@ install_softwares() {
     sed -i 's/http:\/\/security.ubuntu.com/http:\/\/mirrors.aliyun.com/g' /etc/apt/sources.list
 
     timedatectl set-timezone Asia/Shanghai
-    apt update -y 
+    apt update -y
     apt install -y libevent-dev ncurses-dev bison pkg-config build-essential
     apt install -y vim git ripgrep universal-ctags htop zip unzip
     apt install -y apt-transport-https ca-certificates curl software-properties-common
@@ -114,7 +114,7 @@ EOF
 
     # 代理设置
 set_proxy () {
-    
+
     http_proxy="$1"
     https_proxy="$2"
     no_proxy="$3"
@@ -221,7 +221,7 @@ pull_image () {
 for id in ${ids[@]}; do
     ip=$ip_segment.$id
 
-    echo 
+    echo
     warn "================================"
     warn "====== $ip ======"
     warn "================================"

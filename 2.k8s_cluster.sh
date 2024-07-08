@@ -9,6 +9,9 @@ ctrl_ip=$ip_segment.$masterid
 k8s_cluster () {
     ip=$1
     ctrl_ip=$2
+    service_cidr=$3
+    pod_network_cidr=$4
+
     warn "================================"
     warn "====== $ip ======"
     warn "================================"
@@ -32,7 +35,7 @@ k8s_cluster () {
     if [ "$ip" == "$ctrl_ip" ] ; then
         nodes=$(kubectl get nodes -o jsonpath='{.items[*].metadata.name}')
         if [ -z "$nodes" ]; then
-            info ========== no nodes ============== 
+            info ========== no nodes ==============
         else
             for node in $nodes; do
                 # 对于每个节点，获取其污点信息
@@ -52,6 +55,8 @@ k8s_cluster () {
         version=$(kubelet --version | awk '{print $2}')
 
         info ======== ctrl node init on $ip =========
+        info ======== service_cidr $service_cidr =========
+        info ======== pod-network-cidr $pod_network_cidr =========
 
         # Initialize the control node
         kubeadm init \
@@ -83,7 +88,7 @@ k8s_cluster () {
         info ======== work node $ip join $ctrl_ip =========
         # Initialize a worker node
         ssh-keygen -f "/root/.ssh/known_hosts" -R $ctrl_ip
-        scp -o StrictHostKeyChecking=accept-new root@$ctrl_ip:$kubeadm_file $kubeadm_file 
+        scp -o StrictHostKeyChecking=accept-new root@$ctrl_ip:$kubeadm_file $kubeadm_file
         # Join the worker node to the control node
         token=$(grep 'kubeadm join' $kubeadm_file | sed -n -e 's/^.*--token \(\S*\).*$/\1/p' | tail -1)
         token_hash=$(grep 'discovery\-token\-ca\-cert\-hash' $kubeadm_file | sed -n -e 's/^.*--discovery-token-ca-cert-hash \(\S*\).*$/\1/p' | tail -1)
@@ -93,7 +98,7 @@ k8s_cluster () {
     fi
 
     sed -i 's#--network-plugin=cni##' /var/lib/kubelet/kubeadm-flags.env
-    
+
 
     cat > /etc/cni/net.d/10-flannel.conf <<EOF
 {
@@ -107,15 +112,20 @@ k8s_cluster () {
 EOF
 }
 
+
+
+# =============================
+# 正式构建cluster
+# =============================
 for id in ${ids[@]}; do
     if [[ "${no_ids[@]}" =~ "${id}" ]]; then
         warn $id not join k8s cluster
         continue
     fi
-    
+
     ip=$ip_segment.$id
 
     echo
-    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f k8s_cluster warn info error); k8s_cluster $ip $ctrl_ip"
+    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f k8s_cluster warn info error); k8s_cluster $ip $ctrl_ip $service_cidr $pod_network_cidr"
 
 done
