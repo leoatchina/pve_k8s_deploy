@@ -58,8 +58,6 @@ install_containerd() {
     [ -f /etc/containerd/config.toml ] && rm /etc/containerd/config.toml
     containerd config default | tee /etc/containerd/config.toml
 
-    # Generate the default containerd configuration file
-    # /usr/bin/containerd config default > /etc/containerd/config.toml
 
     # Modify the containerd configuration file to use a different container image registry
     fl="/etc/containerd/config.toml"
@@ -112,14 +110,14 @@ EOF
 
 
 
-    # 代理设置
+# 代理设置
 set_proxy () {
-
-    http_proxy="$1"
-    https_proxy="$2"
-    no_proxy="$3"
+    fl="$1"
+    http_proxy="$2"
+    https_proxy="$3"
+    no_proxy="$4"
     # 检查并添加代理设置
-   add_proxy_if_missing() {
+    add_proxy_if_missing() {
         local service_file="$1"
         local setting_name="$2"
         local setting_value="$3"
@@ -136,32 +134,20 @@ set_proxy () {
                 return
             fi
         done < "$service_file"
-
         # 如果[Service]部分中没有找到设置，则添加它
         sed -i "/\[Service\]/a $setting_name=$setting_value\"" "$service_file"
     }
-
-    # 挂代理
-    fl=/usr/lib/systemd/system/kubelet.service
+    echo $fl
     add_proxy_if_missing $fl "Environment=\"NO_PROXY" "$no_proxy"
     add_proxy_if_missing $fl "Environment=\"HTTPS_PROXY" "$https_proxy"
     add_proxy_if_missing $fl "Environment=\"HTTP_PROXY" "$http_proxy"
-    echo $fl
     cat $fl | grep PROXY
-
-    fl=/usr/lib/systemd/system/containerd.service
-    add_proxy_if_missing $fl "Environment=\"NO_PROXY" "$no_proxy"
-    add_proxy_if_missing $fl "Environment=\"HTTPS_PROXY" "$https_proxy"
-    add_proxy_if_missing $fl "Environment=\"HTTP_PROXY" "$http_proxy"
-    echo $fl
-    cat $fl | grep PROXY
-
 
     # 重新加载systemd配置并提示重启服务
     systemctl daemon-reload
-    # Restart kubelet service
-    systemctl restart kubelet containerd
-
+    # Restart service
+    systemctl restart containerd
+    systemctl restart kubelet
 }
 
 
@@ -234,16 +220,24 @@ for id in ${ids[@]}; do
     ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_containerd); install_containerd"
 
     echo
-    info "====== Installed k8s on $ip ======"
-    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_k8s); install_k8s $k8s_version"
+    info "====== Set containerd proxy on $ip ======"
+    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f set_proxy); set_proxy /usr/lib/systemd/system/containerd.service $http_proxy $https_proxy $no_proxy"
 
-    echo
-    info "====== Set proxy on $ip ======"
-    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f set_proxy); set_proxy $http_proxy $https_proxy $no_proxy"
+    if [[ "${no_ids[@]}" =~ "${id}" ]]; then
+        warn ============ not install k8s on $ip ===================
+    else
+        echo
+        info "====== Installed k8s on $ip ======"
+        ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_k8s); install_k8s $k8s_version"
 
-    echo
-    info "====== K8s pull on $ip ======"
-    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f pull_image); pull_image "
+        echo
+        info "====== Set kubelet proxy on $ip ======"
+        ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f set_proxy); set_proxy /usr/lib/systemd/system/kubelet.service $http_proxy $https_proxy $no_proxy"
+
+        echo
+        info "====== K8s pull on $ip ======"
+        ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f pull_image); pull_image "
+    fi
 
     # NOTE: 这一步非常重要
     echo

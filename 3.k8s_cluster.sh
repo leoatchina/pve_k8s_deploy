@@ -72,15 +72,11 @@ k8s_cluster () {
 
         cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
 
-
         # flannel net Initialize
         # kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
         # sed -i "s#docker.io#docker.m.daocloud.io#g" /tmp/kube-flannel.yml
         # kubectl apply -f /tmp/kube-flannel.yml
 
-        # calico
-        # bash_path=$(cd "$(dirname "$0")";pwd)
-        # echo $bash_path
     else
         info ======== work node $ip join $ctrl_ip =========
         # Initialize a worker node
@@ -96,8 +92,6 @@ k8s_cluster () {
 
 }
 
-
-
 # =============================
 # 正式构建cluster
 # =============================
@@ -106,11 +100,8 @@ for id in ${ids[@]}; do
         warn $id not join k8s cluster
         continue
     fi
-
     ip=$ip_segment.$id
-
     ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f k8s_cluster warn info error); k8s_cluster $ip $ctrl_ip $service_cidr $pod_network_cidr"
-
 done
 
 
@@ -138,8 +129,6 @@ for id in ${ids[@]}; do
         warn $id not join k8s cluster
         continue
     fi
-
     ip=$ip_segment.$id
-
     ssh -o StrictHostKeyChecking=no root@$ip "reboot  "
 done
