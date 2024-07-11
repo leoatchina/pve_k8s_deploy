@@ -38,5 +38,5 @@ pod_network_cidr="10.244.0.0/16"
 
 # vm机器， kubelet 和containerd 使用的代理
 http_proxy="http://127.0.0.1:7890"
-https_proxy="https://127.0.0.1:7890"
+https_proxy="http://127.0.0.1:7890"
 no_proxy="192.168.0.0/16,10.244.0.0/16,127.0.0.1,10.0.0.0/8,172.16.0.0/12,localhost"
