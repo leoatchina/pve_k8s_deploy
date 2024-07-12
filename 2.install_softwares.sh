@@ -74,6 +74,12 @@ install_containerd() {
     sed -i "s#SystemdCgroup = false#SystemdCgroup = true#g" $fl
 }
 
+install_docker() {
+    # apt update -y && apt upgrade -y && apt autoremove -y
+    apt update -y
+    apt install -y docker.io
+}
+
 
 install_k8s() {
     version=$1
@@ -229,6 +235,14 @@ for id in ${ids[@]}; do
     echo
     info "====== Set containerd proxy on $ip ======"
     ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f set_proxy); set_proxy /usr/lib/systemd/system/containerd.service $http_proxy $https_proxy $no_proxy"
+
+    echo
+    info "====== Installed docker on $ip ======"
+    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_docker); install_docker"
+
+    echo
+    info "====== Set docker proxy on $ip ======"
+    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f set_proxy); set_proxy /usr/lib/systemd/system/docker.service $http_proxy $https_proxy $no_proxy"
 
     if [[ "${no_ids[@]}" =~ "${id}" ]]; then
         warn ============ not install k8s on $ip ===================
