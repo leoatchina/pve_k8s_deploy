@@ -125,7 +125,12 @@ EOF
 
 # 代理设置
 set_proxy () {
-    fl="$1"
+    if [ -f "$fl" ]; then
+        echo "$fl exists."
+    else
+        echo "$fl does not exist."
+        return
+    fi
     http_proxy="$2"
     https_proxy="$3"
     no_proxy="$4"
