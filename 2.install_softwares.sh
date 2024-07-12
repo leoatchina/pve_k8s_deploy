@@ -152,9 +152,9 @@ set_proxy () {
 
     # 重新加载systemd配置并提示重启服务
     systemctl daemon-reload
+    service=$(basename $fl)
     # Restart service
-    systemctl restart containerd
-    systemctl restart kubelet
+    systemctl restart $service
 }
 
 
