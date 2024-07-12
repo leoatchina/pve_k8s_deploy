@@ -39,10 +39,17 @@ install_softwares() {
         source ~/.leovim/conf.d/init.vim
     endif
 EOF
+    mkdir -p ~/.local
     if [ -d ~/.leovim ]; then
         cd ~/.leovim && git pull
     else
         git clone https://gitee.com/leoatchina/leovim.git ~/.leovim
+    fi
+
+    if [ -d ~/.local/fzf ]; then
+        cd ~/.local/fzf && git pull && ./install --all
+    else
+        git clone --depth 1 https://github.com/junegunn/fzf ~/.local/fzf && cd ~/.local/fzf && ./install --all
     fi
 
 }
