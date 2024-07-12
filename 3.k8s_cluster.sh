@@ -126,10 +126,12 @@ flannel () {
 
 # apply on control ip, 建立cni 网络
 if [ $# > 0 ] && [ "$1" == "flannel" ]; then
-    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f flannel); flannel $pod_network_cidr"
+    ssh -o StrictHostKeyChecking=no root@$ctrl_ip "$(declare -f flannel); flannel $pod_network_cidr"
 else
-    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f calico); calico $pod_network_cidr"
+    ssh -o StrictHostKeyChecking=no root@$ctrl_ip "$(declare -f calico); calico $pod_network_cidr"
 fi
+
+sleep 10
 
 # =============================
 # reboot

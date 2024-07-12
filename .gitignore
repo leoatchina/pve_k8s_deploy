@@ -1,4 +1,5 @@
 # 特定文件
+0
 base.config
 GPATH
 GRTAGS
@@ -7,6 +8,11 @@ GTAGS
 tags
 tag-ja
 tag.lock
+
+
+test*.sh
+tmp*.sh
+
 
 # 文件通配
 .vimspector.*
