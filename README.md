@@ -34,4 +34,4 @@
 - 而在`no_ids`里的`vm` 不会安装kubeadm/kubectl/kubelet和pull镜像
 
 ## [3.k8s_cluster.sh](./3.k8s_cluster.sh)
-进行k8s组网， 其中放在 `no_ids`里的vm不会加入到k8s集群里
+进行k8s组网， 其中放在 `no_ids`里的vm不会加入到k8s里. 注意， 默认没有组`cni` 网络。
