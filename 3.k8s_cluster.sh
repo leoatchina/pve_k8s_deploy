@@ -123,6 +123,13 @@ tigera_calico () {
     kubectl apply -f /tmp/custom-resources.yaml
 }
 
+calico () {
+    pod_network_cidr=$1
+    cp ./calico.yaml /tmp
+    sed -i "s#192.168.0.0/16#$pod_network_cidr#g" /tmp/calico.yaml
+    kubectl apply -f /tmp/calico.yaml
+}
+
 # apply on control ip, 建立cni 网络
 if [ $# > 0 ]; then
     if [ "$1" == "flannel" ]; then
