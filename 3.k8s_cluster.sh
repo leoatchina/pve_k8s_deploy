@@ -69,7 +69,6 @@ k8s_cluster () {
             --kubernetes-version=$version \
             --service-cidr=$service_cidr \
             --pod-network-cidr=$pod_network_cidr | tee $kubeadm_file
-
         cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
 
     else
@@ -80,11 +79,11 @@ k8s_cluster () {
         # Join the worker node to the control node
         token=$(grep 'kubeadm join' $kubeadm_file | sed -n -e 's/^.*--token \(\S*\).*$/\1/p' | tail -1)
         token_hash=$(grep 'discovery\-token\-ca\-cert\-hash' $kubeadm_file | sed -n -e 's/^.*--discovery-token-ca-cert-hash \(\S*\).*$/\1/p' | tail -1)
+
         rm $kubeadm_file
         kubeadm join $ctrl_ip:6443 --token $token --discovery-token-ca-cert-hash $token_hash
         scp -o StrictHostKeyChecking=accept-new root@$ctrl_ip:/etc/kubernetes/admin.conf $HOME/.kube/config
     fi
-
 }
 
 # =============================
@@ -96,54 +95,33 @@ for id in ${ids[@]}; do
         continue
     fi
     ip=$ip_segment.$id
+    if [ $# -gt 0 ]; then
+        $ctrl_ip = $1 
+    fi
     ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f k8s_cluster warn info error); k8s_cluster $ip $ctrl_ip $service_cidr $pod_network_cidr"
 done
 
 # =============================
 # 在contral node 上设置 cni 
 # =============================
-flannel () {
-    pod_network_cidr=$1
-    wget https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml /tmp/kube-flannel.yml
-    sed -i "s#10.244.0.0/16#$pod_network_cidr#g" /tmp/kube-flannel.yml
-    kubectl apply -f /tmp/kube-flannel.yml
-}
-
-tigera_calico () {
-    pod_network_cidr=$1
-    kubectl create -f https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/tigera-operator.yaml
-    wget https://raw.githubusercontent.com/projectcalico/calico/v3.28.0/manifests/custom-resources.yaml -O /tmp/custom-resources.yaml
-    sed -i "s#192.168.0.0/16#$pod_network_cidr#g" /tmp/custom-resources.yaml
-    kubectl apply -f /tmp/custom-resources.yaml
-}
-
 calico () {
     pod_network_cidr=$1
-    cp ./calico.yaml /tmp
     sed -i "s#192.168.0.0/16#$pod_network_cidr#g" /tmp/calico.yaml
+    if [ -f /usr/bin/tailscale ]; then
+        tailscale_ip=`ip a | grep inet | grep  tailscale | awk '{print $2}'` 
+        warn =========== tailscale_ip is $tailscale_ip ==============
+        IFS='.' read -r a b c d <<< "${tailscale_ip%/*}"
+        cidr_ip="$a.$b.0.0/16"
+        value="cidr=$cidr_ip" 
+        sed -i "s#can-reach=192.168.1.1#$value#g" /tmp/calico.yaml
+    fi
     kubectl apply -f /tmp/calico.yaml
 }
 
 # apply on control ip, 建立cni 网络
-if [ $# > 0 ] && [ "$1" == "flannel" ]; then
-    ssh -o StrictHostKeyChecking=no root@$ctrl_ip "$(declare -f flannel); flannel $pod_network_cidr"
-elif [ $# > 0 ] && [ "$1" == "tigera_calico" ]; then
-    ssh -o StrictHostKeyChecking=no root@$ctrl_ip "$(declare -f tigera_calico); tigera_calico $pod_network_cidr"
-else
-    ssh -o StrictHostKeyChecking=no root@$ctrl_ip "$(declare -f calico); calico $pod_network_cidr"
-fi
+scp $bash_path/calico.yaml root@$ctrl_ip:/tmp
+ssh -o StrictHostKeyChecking=no root@$ctrl_ip "$(declare -f calico warn); calico $pod_network_cidr"
 
 sleep 5
 
 info "===== k8s cluster set up ====="
-# =============================
-# reboot
-# =============================
-# for id in ${ids[@]}; do
-#     if [[ "${no_ids[@]}" =~ "${id}" ]]; then
-#         warn $id not join k8s cluster
-#         continue
-#     fi
-#     ip=$ip_segment.$id
-#     ssh -o StrictHostKeyChecking=no root@$ip "reboot  "
-# done

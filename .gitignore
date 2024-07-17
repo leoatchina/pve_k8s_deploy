@@ -12,6 +12,7 @@ tag.lock
 
 test*.sh
 tmp*.sh
+deploy*.sh
 
 
 # 文件通配

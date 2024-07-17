@@ -3,13 +3,17 @@
 bash_path=$(cd "$(dirname "$0")";pwd)
 source $bash_path/util.sh
 
-
-
 # ================================================
 # install_softwares
 # ================================================
 install_softwares() {
     swapoff -a
+    # set vimr.local firstly
+    cat << EOF | tee ~/.vimrc.local
+if has('nvim')
+    source ~/.leovim/conf.d/init.vim
+endif
+EOF
     sed -ri 's/.*swap.*/#&/' /etc/fstab
 
     sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/mirrors.aliyun.com/g' /etc/apt/sources.list
@@ -33,12 +37,6 @@ install_softwares() {
 
     mkdir -p /data/nfs
     # leovim
-    mkdir -p /root/.local
-    cat << EOF | tee ~/.vimrc.local
-    if has('nvim')
-        source ~/.leovim/conf.d/init.vim
-    endif
-EOF
     mkdir -p ~/.local
     if [ -d ~/.leovim ]; then
         cd ~/.leovim && git pull
@@ -121,10 +119,9 @@ EOF
     apt-get install -y kubelet kubeadm kubectl
 }
 
-
-
 # 代理设置
 set_proxy () {
+    fl=$1
     if [ -f "$fl" ]; then
         echo "$fl exists."
     else
@@ -167,8 +164,6 @@ set_proxy () {
     # Restart service
     systemctl restart $service
 }
-
-
 
 pull_image () {
     images=$(kubeadm config images list)
@@ -219,8 +214,6 @@ pull_image () {
     crictl config runtime-endpoint unix:///var/run/containerd/containerd.sock
 }
 
-
-
 for id in ${ids[@]}; do
     ip=$ip_segment.$id
 
@@ -265,9 +258,8 @@ for id in ${ids[@]}; do
         ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f pull_image); pull_image "
     fi
 
-    # NOTE: 这一步非常重要
-    echo
-    info "====== rebooting $ip ======"
-    ssh -o StrictHostKeyChecking=no root@$ip "reboot "
+    error "==== succesfully install/update softwares on $ip, wating 5 seconds to reboot ==="
 
+    sleep 5
+    ssh -o StrictHostKeyChecking=no root@$ip "reboot"
 done
