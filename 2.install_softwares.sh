@@ -8,6 +8,7 @@ source $bash_path/util.sh
 # ================================================
 install_softwares() {
     swapoff -a
+    mkdir -p /data/nfs
     # set vimr.local firstly
     cat << EOF | tee ~/.vimrc.local
 if has('nvim')
@@ -28,14 +29,13 @@ EOF
     apt install -y python3-pip python3-venv && pip install neovim
 
     # tmux
-    apt remove -y tmux
     if [ ! -f /usr/bin/tmux ]; then
         [ -f /tmp/tmux-3.4.tar.gz ] && rm /tmp/tmux-3.4.tar.gz
         cd /tmp && wget https://github.com/tmux/tmux/releases/download/3.4/tmux-3.4.tar.gz && \
             tar xvf tmux-3.4.tar.gz && cd tmux-3.4 && ./configure --prefix=/usr && make -j 4 && make install
     fi
 
-    mkdir -p /data/nfs
+
     # leovim
     mkdir -p ~/.local
     if [ -d ~/.leovim ]; then

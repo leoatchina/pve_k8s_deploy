@@ -53,9 +53,7 @@ k8s_cluster () {
                 fi
             done
         fi
-
         version=$(kubelet --version | awk '{print $2}')
-
 
         info ======== ctrl node init on $ip =========
         info ======== service_cidr $service_cidr =========
@@ -98,26 +96,38 @@ for id in ${cluster_ids[@]}; do
 done
 
 # =============================
-# 在contral node 上设置 cni 
+# 在contral node 上设置 cni
 # =============================
 calico () {
     pod_network_cidr=$1
     sed -i "s#192.168.0.0/16#$pod_network_cidr#g" /tmp/calico.yaml
     if [ -f /usr/bin/tailscale ]; then
-        tailscale_ip=`ip a | grep inet | grep  tailscale | awk '{print $2}'` 
+        tailscale_ip=`ip a | grep inet | grep  tailscale | awk '{print $2}'`
         warn =========== tailscale_ip is $tailscale_ip ==============
         IFS='.' read -r a b c d <<< "${tailscale_ip%/*}"
         cidr_ip="$a.$b.0.0/16"
-        value="cidr=$cidr_ip" 
+        value="cidr=$cidr_ip"
         sed -i "s#can-reach=192.168.1.1#$value#g" /tmp/calico.yaml
     fi
     kubectl apply -f /tmp/calico.yaml
+    sleep 8
+    kubectl taint nodes --all node.kubernetes.io/not-ready-
 }
 
-# apply on control ip, 建立cni 网络
-scp $bash_path/calico.yaml root@$ctrl_ip:/tmp
-ssh -o StrictHostKeyChecking=no root@$ctrl_ip "$(declare -f calico warn info error); calico $pod_network_cidr"
+if [ $# > 0 ]; then
+    if [[ $1 == 'calico' ]]; then
+        cni=$1
+        scp $bash_path/calico.yaml root@$ctrl_ip:/tmp
+        ssh -o StrictHostKeyChecking=no root@$ctrl_ip "$(declare -f calico warn info error); calico $pod_network_cidr"
+    else
+        cni=""
+    fi
+else
+    cni=""
+fi
 
-sleep 5
-
-info "===== k8s cluster set up ====="
+if [[ $cni != '' ]]; then
+    warn "===== k8s cluster set up with cni plugin $cni, the control ip is $ctrl_ip ====="
+else
+    warn "===== k8s cluster set up without cni plugin, the control ip is $ctrl_ip ====="
+fi
