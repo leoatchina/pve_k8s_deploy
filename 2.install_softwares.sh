@@ -220,6 +220,7 @@ else
     proxy_exist=0
 fi
 
+
 for id in ${ids[@]}; do
     ip=$ip_segment.$id
 
@@ -244,11 +245,12 @@ for id in ${ids[@]}; do
         ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f set_proxy); set_proxy /usr/lib/systemd/system/docker.service $http_proxy $https_proxy $no_proxy"
     fi
 
-    if [[ "${no_ids[@]}" =~ "${id}" ]]; then
+    if [[ "${nok8s_ids[@]}" =~ "${id}" ]]; then
         warn ============ not install k8s on $ip ===================
     else
         info "====== Installed k8s on $ip ======"
         ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_k8s); install_k8s $k8s_version"
+
         if [ $proxy_exist > 0 ]; then
             info "====== Set kubelet proxy on $ip ======"
             ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f set_proxy); set_proxy /usr/lib/systemd/system/kubelet.service $http_proxy $https_proxy $no_proxy"

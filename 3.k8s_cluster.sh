@@ -101,14 +101,14 @@ k8s_cluster () {
 # =============================
 # 正式构建cluster
 # =============================
-for id in ${ids[@]}; do
-    if [[ "${no_ids[@]}" =~ "${id}" ]]; then
+for id in ${cluster_ids[@]}; do
+    if [[ "${nok8s_ids[@]}" =~ "${id}" ]]; then
         warn $id not join k8s cluster
         continue
     fi
     ip=$ip_segment.$id
     if [ $# -gt 0 ]; then
-        $ctrl_ip2 = $1 
+        ctrl_ip2=$1 
         ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f k8s_cluster warn info error); k8s_cluster $ip $ctrl_ip $service_cidr $pod_network_cidr $ctrl_ip2"
     else
         ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f k8s_cluster warn info error); k8s_cluster $ip $ctrl_ip $service_cidr $pod_network_cidr"
@@ -134,7 +134,7 @@ calico () {
 
 # apply on control ip, 建立cni 网络
 scp $bash_path/calico.yaml root@$ctrl_ip:/tmp
-ssh -o StrictHostKeyChecking=no root@$ctrl_ip "$(declare -f calico warn); calico $pod_network_cidr"
+ssh -o StrictHostKeyChecking=no root@$ctrl_ip "$(declare -f calico warn info error); calico $pod_network_cidr"
 
 sleep 5
 
