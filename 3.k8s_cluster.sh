@@ -10,12 +10,6 @@ k8s_cluster () {
     service_cidr=$3
     pod_network_cidr=$4
 
-    if [ $# > 4 ]; then
-        ctrl_ip2=$5
-    else
-        ctrl_ip2=""
-    fi
-
     warn "================================"
     warn "====== $ip ======"
     warn "================================"
@@ -62,9 +56,6 @@ k8s_cluster () {
 
         version=$(kubelet --version | awk '{print $2}')
 
-        if [[ ctrl_ip2 != "" ]] then
-            ctrl_ip=$ctrl_ip2
-        fi
 
         info ======== ctrl node init on $ip =========
         info ======== service_cidr $service_cidr =========
@@ -79,11 +70,7 @@ k8s_cluster () {
             --pod-network-cidr=$pod_network_cidr | tee $kubeadm_file
         cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
 
-
     else
-        if [[ ctrl_ip2 != "" ]] then
-            ctrl_ip=$ctrl_ip2
-        fi
         info ======== work node $ip join $ctrl_ip =========
         # Initialize a worker node
         ssh-keygen -f "/root/.ssh/known_hosts" -R $ctrl_ip
@@ -94,7 +81,7 @@ k8s_cluster () {
 
         rm $kubeadm_file
         kubeadm join $ctrl_ip:6443 --token $token --discovery-token-ca-cert-hash $token_hash
-        scp -o StrictHostKeyChecking=accept-new root@$ctrl_ip:/etc/kubernetes/admin.conf $HOME/.kube/config
+        # scp -o StrictHostKeyChecking=accept-new root@$ctrl_ip:/etc/kubernetes/admin.conf $HOME/.kube/config
     fi
 }
 
@@ -107,12 +94,7 @@ for id in ${cluster_ids[@]}; do
         continue
     fi
     ip=$ip_segment.$id
-    if [ $# -gt 0 ]; then
-        ctrl_ip2=$1 
-        ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f k8s_cluster warn info error); k8s_cluster $ip $ctrl_ip $service_cidr $pod_network_cidr $ctrl_ip2"
-    else
-        ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f k8s_cluster warn info error); k8s_cluster $ip $ctrl_ip $service_cidr $pod_network_cidr"
-    fi
+    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f k8s_cluster warn info error); k8s_cluster $ip $ctrl_ip $service_cidr $pod_network_cidr"
 done
 
 # =============================
