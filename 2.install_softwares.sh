@@ -214,52 +214,51 @@ pull_image () {
     crictl config runtime-endpoint unix:///var/run/containerd/containerd.sock
 }
 
+if [[ -n $http_proxy && $http_proxy =~ [^[:space:]] ]] && [[ -n $https_proxy && $https_proxy =~ [^[:space:]] ]] && [[ -n $no_proxy && $no_proxy =~ [^[:space:]] ]]; then
+    proxy_exist=1
+else
+    proxy_exist=0
+fi
+
 for id in ${ids[@]}; do
     ip=$ip_segment.$id
 
-    echo
     warn "================================"
     warn "====== $ip ======"
     warn "================================"
 
-    echo
     info "====== Installed softwares on $ip ======"
     ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_softwares); install_softwares"
 
-    echo
     info "====== Installed containerd on $ip ======"
     ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_containerd); install_containerd"
+    if [ $proxy_exist > 0 ]; then
+        info "====== Set containerd proxy on $ip ======"
+        ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f set_proxy); set_proxy /usr/lib/systemd/system/containerd.service $http_proxy $https_proxy $no_proxy"
+    fi
 
-    echo
-    info "====== Set containerd proxy on $ip ======"
-    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f set_proxy); set_proxy /usr/lib/systemd/system/containerd.service $http_proxy $https_proxy $no_proxy"
-
-    echo
     info "====== Installed docker on $ip ======"
     ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_docker); install_docker"
-
-    echo
-    info "====== Set docker proxy on $ip ======"
-    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f set_proxy); set_proxy /usr/lib/systemd/system/docker.service $http_proxy $https_proxy $no_proxy"
+    if [ $proxy_exist > 0 ]; then
+        info "====== Set docker proxy on $ip ======"
+        ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f set_proxy); set_proxy /usr/lib/systemd/system/docker.service $http_proxy $https_proxy $no_proxy"
+    fi
 
     if [[ "${no_ids[@]}" =~ "${id}" ]]; then
         warn ============ not install k8s on $ip ===================
     else
-        echo
         info "====== Installed k8s on $ip ======"
         ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_k8s); install_k8s $k8s_version"
+        if [ $proxy_exist > 0 ]; then
+            info "====== Set kubelet proxy on $ip ======"
+            ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f set_proxy); set_proxy /usr/lib/systemd/system/kubelet.service $http_proxy $https_proxy $no_proxy"
+        fi
 
-        echo
-        info "====== Set kubelet proxy on $ip ======"
-        ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f set_proxy); set_proxy /usr/lib/systemd/system/kubelet.service $http_proxy $https_proxy $no_proxy"
-
-        echo
         info "====== K8s pull on $ip ======"
         ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f pull_image); pull_image "
     fi
-
-    error "==== succesfully install/update softwares on $ip, wating 5 seconds to reboot ==="
-
+    error "==== succesfully install/update softwares on $ip ==="
     sleep 5
-    ssh -o StrictHostKeyChecking=no root@$ip "reboot"
+
+    # ssh -o StrictHostKeyChecking=no root@$ip "reboot"
 done
