@@ -102,16 +102,21 @@ calico () {
     pod_network_cidr=$1
     sed -i "s#192.168.0.0/16#$pod_network_cidr#g" /tmp/calico.yaml
     if [ -f /usr/bin/tailscale ]; then
+        # 先是代替cidr
         tailscale_ip=`ip a | grep inet | grep  tailscale | awk '{print $2}'`
         warn =========== tailscale_ip is $tailscale_ip ==============
         IFS='.' read -r a b c d <<< "${tailscale_ip%/*}"
         cidr_ip="$a.$b.0.0/16"
         value="cidr=$cidr_ip"
         sed -i "s#can-reach=192.168.1.1#$value#g" /tmp/calico.yaml
+        # 
     fi
     kubectl apply -f /tmp/calico.yaml
+    if [ -f /usr/bin/tailscale ]; then
+        sleep 2 
+        kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabled":true}}'
+    fi
     sleep 8
-    kubectl taint nodes --all node.kubernetes.io/not-ready-
 }
 
 if [ $# > 0 ]; then
@@ -125,6 +130,8 @@ if [ $# > 0 ]; then
 else
     cni=""
 fi
+
+ssh -o StrictHostKeyChecking=no root@$ctrl_ip "kubectl taint nodes --all node.kubernetes.io/not-ready-"
 
 if [[ $cni != '' ]]; then
     warn "===== k8s cluster set up with cni plugin $cni, the control ip is $ctrl_ip ====="

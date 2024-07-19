@@ -172,16 +172,13 @@ pull_image () {
     do
         echo $image
     done
-    echo
 
     echo ===== images exist =====
-    # List the existing images
     ctr image list | awk 'NR>1 {print $1":"$2}'
     echo ========================
 
-    max_retries=3
-
     # 正式pull
+    max_retries=3
     for image in $images; do
         retry=0
         # Check if the image is already pulled on the specified node
@@ -206,7 +203,7 @@ pull_image () {
             done
 
             if [ $retry -ge $max_retries ]; then
-                echo "image pull failed after $max_retries attempts."
+                echo "image pull failed after $max_retries attempts, please check your net, exiting."
                 exit 1
             fi
         fi
