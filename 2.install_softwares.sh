@@ -153,7 +153,6 @@ set_proxy () {
         # 如果[Service]部分中没有找到设置，则添加它
         sed -i "/\[Service\]/a $setting_name=$setting_value\"" "$service_file"
     }
-    echo $fl
     add_proxy_if_missing $fl "Environment=\"NO_PROXY" "$no_proxy"
     add_proxy_if_missing $fl "Environment=\"HTTPS_PROXY" "$https_proxy"
     add_proxy_if_missing $fl "Environment=\"HTTP_PROXY" "$http_proxy"
@@ -225,30 +224,30 @@ fi
 for id in ${ids[@]}; do
     ip=$ip_segment.$id
 
-    warn "================================"
+    warn "============================================="
     warn "====== Installing on $ip ======"
-    warn "================================"
+    warn "============================================="
 
     ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_softwares); install_softwares"
 
     info "====== Installing containerd on $ip ======"
     ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_containerd); install_containerd"
     if [ $proxy_exist > 0 ]; then
-        info "====== Set containerd proxy on $ip ======"
+        warn "====== Set containerd proxy on $ip ======"
         ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f set_proxy); set_proxy /usr/lib/systemd/system/containerd.service $http_proxy $https_proxy $no_proxy"
     fi
 
     info "====== Installing docker on $ip ======"
     ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_docker); install_docker"
     if [ $proxy_exist > 0 ]; then
-        info "====== Set docker proxy on $ip ======"
+        warn "====== Set docker proxy on $ip ======"
         ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f set_proxy); set_proxy /usr/lib/systemd/system/docker.service $http_proxy $https_proxy $no_proxy"
     fi
 
     if [[ "${nok8s_ids[@]}" =~ "${id}" ]]; then
-        warn ============ not install k8s on $ip ===================
+        error ============ not install k8s on $ip ===================
     else
-        info "====== Installing k8s on $ip ======"
+        warn "====== Installing k8s on $ip ======"
         ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_k8s); install_k8s $k8s_version"
 
         if [ $proxy_exist > 0 ]; then
@@ -259,6 +258,5 @@ for id in ${ids[@]}; do
         info "====== K8s pull on $ip ======"
         ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f pull_image); pull_image "
     fi
-    error "==== Succesfully installed/updated softwares on $ip ==="
     sleep 5
 done

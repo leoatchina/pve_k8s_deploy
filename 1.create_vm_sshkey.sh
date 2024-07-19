@@ -31,7 +31,7 @@ for id in ${ids[@]}; do
 done
 
 
-# NOTE:  must sleep to enable last vm
+# NOTE:  must sleep to make last vm started.
 sleep 10
 
 # ================================================
@@ -77,7 +77,7 @@ for id in ${ids[@]}; do
         if ssh -o StrictHostKeyChecking=accept-new root@$ip "grep -qF '$key2' ~/.ssh/authorized_keys"; then
             warn "Key of $node already exists in authorized_keys on $ip"
         else
-            info "Adding key of $node to authorized_keys on $ip"
+            error "Adding key of $node to authorized_keys on $ip"
             echo "$key" | ssh -o StrictHostKeyChecking=accept-new root@$ip "cat >> ~/.ssh/authorized_keys"
         fi
     done
