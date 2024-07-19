@@ -7,7 +7,11 @@ source $bash_path/util.sh
 # install_softwares
 # ================================================
 install_softwares() {
+    # swap off
     swapoff -a
+    sed -ri 's/.*swap.*/#&/' /etc/fstab
+    # set time , create dir file maybe needed
+    timedatectl set-timezone Asia/Shanghai
     mkdir -p /data/nfs
     # set vimr.local firstly
     cat << EOF | tee ~/.vimrc.local
@@ -15,17 +19,16 @@ if has('nvim')
     source ~/.leovim/conf.d/init.vim
 endif
 EOF
-    sed -ri 's/.*swap.*/#&/' /etc/fstab
 
+    # set apt sources
     sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/mirrors.aliyun.com/g' /etc/apt/sources.list
     sed -i 's/http:\/\/security.ubuntu.com/http:\/\/mirrors.aliyun.com/g' /etc/apt/sources.list
-
-    timedatectl set-timezone Asia/Shanghai
+    # apt install 
     apt update -y
     apt install -y libevent-dev ncurses-dev bison pkg-config build-essential
     apt install -y vim git ripgrep universal-ctags htop zip unzip
     apt install -y apt-transport-https ca-certificates curl software-properties-common
-    apt install -y lua5.3 nfs-common net-tools sshfs
+    apt install -y lua5.3 nfs-common net-tools sshfs tcpdump
     apt install -y python3-pip python3-venv && pip install neovim
 
     # tmux
@@ -34,7 +37,6 @@ EOF
         cd /tmp && wget https://github.com/tmux/tmux/releases/download/3.4/tmux-3.4.tar.gz && \
             tar xvf tmux-3.4.tar.gz && cd tmux-3.4 && ./configure --prefix=/usr && make -j 4 && make install
     fi
-
 
     # leovim
     mkdir -p ~/.local
@@ -137,13 +139,12 @@ set_proxy () {
         local setting_name="$2"
         local setting_value="$3"
         local service_section_found=0
-
+        # TODO: replace existing proxies
         while IFS= read -r line; do
             # 检测[Service]部分的开始
             if [[ "$line" == "[Service]" ]]; then
                 service_section_found=1
             fi
-
             # 当在[Service]部分中找到设置时，返回
             if [[ $service_section_found -eq 1 && "$line" == "$setting_name="* ]]; then
                 return
@@ -225,20 +226,19 @@ for id in ${ids[@]}; do
     ip=$ip_segment.$id
 
     warn "================================"
-    warn "====== $ip ======"
+    warn "====== Installing on $ip ======"
     warn "================================"
 
-    info "====== Installed softwares on $ip ======"
     ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_softwares); install_softwares"
 
-    info "====== Installed containerd on $ip ======"
+    info "====== Installing containerd on $ip ======"
     ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_containerd); install_containerd"
     if [ $proxy_exist > 0 ]; then
         info "====== Set containerd proxy on $ip ======"
         ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f set_proxy); set_proxy /usr/lib/systemd/system/containerd.service $http_proxy $https_proxy $no_proxy"
     fi
 
-    info "====== Installed docker on $ip ======"
+    info "====== Installing docker on $ip ======"
     ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_docker); install_docker"
     if [ $proxy_exist > 0 ]; then
         info "====== Set docker proxy on $ip ======"
@@ -248,7 +248,7 @@ for id in ${ids[@]}; do
     if [[ "${nok8s_ids[@]}" =~ "${id}" ]]; then
         warn ============ not install k8s on $ip ===================
     else
-        info "====== Installed k8s on $ip ======"
+        info "====== Installing k8s on $ip ======"
         ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_k8s); install_k8s $k8s_version"
 
         if [ $proxy_exist > 0 ]; then
@@ -259,8 +259,6 @@ for id in ${ids[@]}; do
         info "====== K8s pull on $ip ======"
         ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f pull_image); pull_image "
     fi
-    error "==== succesfully install/update softwares on $ip ==="
+    error "==== Succesfully installed/updated softwares on $ip ==="
     sleep 5
-
-    # ssh -o StrictHostKeyChecking=no root@$ip "reboot"
 done
