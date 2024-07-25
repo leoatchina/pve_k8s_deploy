@@ -145,27 +145,28 @@ set_proxy () {
             if [[ "$line" == "[Service]" ]]; then
                 service_section_found=1
             fi
-            # 当在[Service]部分中找到设置时，更新或添加
+            # 当在[Service]部分中找到设置时，更新
             if [[ $service_section_found -eq 1 && "$line" == "$setting_name="* ]]; then
-                sed -i "s#$setting_name=.*#$setting_name=$setting_value#" "$service_file"
+                sed -i "s#$setting_name=.*#$setting_name=$setting_value\"#" "$service_file"
                 return
             fi
         done < "$service_file"
         # 如果[Service]部分中没有找到设置，则添加它
-        sed -i "/\[Service\]/a $setting_name=$setting_value" "$service_file"
+        sed -i "/\[Service\]/a $setting_name=$setting_value\"" "$service_file"
+        systemctl daemon-reload
     }
 
-    add_proxy_if_missing $fl 'Environment="NO_PROXY"' "$no_proxy"
-    add_proxy_if_missing $fl 'Environment="HTTPS_PROXY"' "$https_proxy"
-    add_proxy_if_missing $fl 'Environment="HTTP_PROXY"' "$http_proxy"
+    add_proxy_if_missing $fl 'Environment="NO_PROXY' "$no_proxy"
+    add_proxy_if_missing $fl 'Environment="HTTPS_PROXY' "$https_proxy"
+    add_proxy_if_missing $fl 'Environment="HTTP_PROXY' "$http_proxy"
 
     cat $fl | grep PROXY
 
     # 重新加载systemd配置并提示重启服务
-    systemctl daemon-reload
     service=$(basename $fl)
-    # Restart service
     systemctl restart $service
+    sleep 5
+
 }
 
 pull_image () {
