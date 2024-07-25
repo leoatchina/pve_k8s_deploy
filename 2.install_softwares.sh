@@ -114,7 +114,7 @@ EOF
 
     # Install kubelet, kubeadm, and kubectl
     apt-get autoremove -y
-    curl -fsSL https://mirrors.aliyun.com/kubernetes-new/core/stable/$version/deb/Release.key | gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+    curl -fsSL https://mirrors.aliyun.com/kubernetes-new/core/stable/$version/deb/Release.key | gpg --dearmor --yes -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
     echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://mirrors.aliyun.com/kubernetes-new/core/stable/$version/deb/ /" | tee /etc/apt/sources.list.d/kubernetes.list
 
     apt-get update -y
@@ -139,23 +139,26 @@ set_proxy () {
         local setting_name="$2"
         local setting_value="$3"
         local service_section_found=0
-        # TODO: replace existing proxies
+
         while IFS= read -r line; do
             # 检测[Service]部分的开始
             if [[ "$line" == "[Service]" ]]; then
                 service_section_found=1
             fi
-            # 当在[Service]部分中找到设置时，返回
+            # 当在[Service]部分中找到设置时，更新或添加
             if [[ $service_section_found -eq 1 && "$line" == "$setting_name="* ]]; then
+                sed -i "s#$setting_name=.*#$setting_name=$setting_value#" "$service_file"
                 return
             fi
         done < "$service_file"
         # 如果[Service]部分中没有找到设置，则添加它
-        sed -i "/\[Service\]/a $setting_name=$setting_value\"" "$service_file"
+        sed -i "/\[Service\]/a $setting_name=$setting_value" "$service_file"
     }
-    add_proxy_if_missing $fl "Environment=\"NO_PROXY" "$no_proxy"
-    add_proxy_if_missing $fl "Environment=\"HTTPS_PROXY" "$https_proxy"
-    add_proxy_if_missing $fl "Environment=\"HTTP_PROXY" "$http_proxy"
+
+    add_proxy_if_missing $fl 'Environment="NO_PROXY"' "$no_proxy"
+    add_proxy_if_missing $fl 'Environment="HTTPS_PROXY"' "$https_proxy"
+    add_proxy_if_missing $fl 'Environment="HTTP_PROXY"' "$http_proxy"
+
     cat $fl | grep PROXY
 
     # 重新加载systemd配置并提示重启服务
