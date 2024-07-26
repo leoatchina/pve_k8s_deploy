@@ -123,22 +123,30 @@ EOF
 
 # 代理设置
 set_proxy () {
+    local_echo() {
+        echo -e "\033[34m$@\033[0m"
+    }
+    
     fl=$1
     if [ -f "$fl" ]; then
-        echo "$fl exists."
+        local_echo "$fl exists."
     else
-        echo "$fl does not exist."
+        local_echo "$fl does not exist."
         return
     fi
+
     http_proxy="$2"
     https_proxy="$3"
     no_proxy="$4"
+    
     # 检查并添加代理设置
     add_proxy_if_missing() {
         local service_file="$1"
         local setting_name="$2"
         local setting_value="$3"
+
         local service_section_found=0
+        local proxy_setction_found=0
 
         while IFS= read -r line; do
             # 检测[Service]部分的开始
@@ -146,27 +154,40 @@ set_proxy () {
                 service_section_found=1
             fi
             # 当在[Service]部分中找到设置时，更新
-            if [[ $service_section_found -eq 1 && "$line" == "$setting_name="* ]]; then
-                sed -i "s#$setting_name=.*#$setting_name=$setting_value\"#" "$service_file"
-                return
+            if [[ $service_section_found -eq 1 && "$line" == "$setting_name"* ]]; then
+                proxy_setction_found=1
+                break
             fi
         done < "$service_file"
-        # 如果[Service]部分中没有找到设置，则添加它
-        sed -i "/\[Service\]/a $setting_name=$setting_value\"" "$service_file"
-        systemctl daemon-reload
+
+        # 找到[Service]
+        if [[ $service_section_found -gt 0 ]]; then
+            proxy="$setting_name=$setting_value\""
+            # 如果[Service]部分中没有找到设置，则添加它
+            if [[ proxy_setction_found -eq 0 ]]; then
+                local_echo $setting_name not found in $fl, adding it.
+                sed -i "/\[Service\]/a $proxy" "$service_file"
+            else
+                local_echo $setting_name found in $fl, changing it.
+                sed -i "s#$setting_name=.*#$proxy#" "$service_file"
+            fi
+        else
+            local_echo [Service] section not found in $fl.
+        fi
     }
 
     add_proxy_if_missing $fl 'Environment="NO_PROXY' "$no_proxy"
     add_proxy_if_missing $fl 'Environment="HTTPS_PROXY' "$https_proxy"
     add_proxy_if_missing $fl 'Environment="HTTP_PROXY' "$http_proxy"
-
+    
+    systemctl daemon-reload
+    echo "================== cat $fl | grep PROXY ================"
     cat $fl | grep PROXY
 
     # 重新加载systemd配置并提示重启服务
     service=$(basename $fl)
     systemctl restart $service
-    sleep 5
-
+    sleep 2
 }
 
 pull_image () {
