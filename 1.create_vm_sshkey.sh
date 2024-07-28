@@ -30,9 +30,8 @@ for id in ${ids[@]}; do
     qm start $id
 done
 
-
 # NOTE:  must sleep to make last vm started.
-sleep 10
+sleep 60 
 
 # ================================================
 # 生成每个机器的sshkey
@@ -54,7 +53,6 @@ for id in ${ids[@]}; do
     ssh -o StrictHostKeyChecking=accept-new root@$ip cat ~/.ssh/id_rsa.pub >> "$keys_file"
     sleep 1
 done
-
 
 # ================================================
 # 写入key到每个机器
