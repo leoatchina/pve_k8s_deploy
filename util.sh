@@ -45,8 +45,6 @@ create_vm() {
     # Import the disk image for the virtual machine with the specified ID from the specified image file
     qm importdisk $id $img local-lvm
 
-    cores=4
-    memory=$((16*1024))
 
     if [[ $id -eq 100 ]]; then
         size="200G"

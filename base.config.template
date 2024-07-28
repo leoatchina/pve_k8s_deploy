@@ -1,3 +1,7 @@
+# memory && cores
+memory=8192
+cores=4
+
 # 主控制vm id
 masterid="300"
 
