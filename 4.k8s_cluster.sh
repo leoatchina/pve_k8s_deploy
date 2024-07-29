@@ -96,7 +96,7 @@ for id in ${cluster_ids[@]}; do
 done
 
 # =============================
-# 在contral node 上设置 cni
+# 在contral node 上设置 calico
 # =============================
 calico () {
     pod_network_cidr=$1
@@ -106,24 +106,34 @@ calico () {
         tailscale_ip=`ip a | grep inet | grep  tailscale | awk '{print $2}'`
         warn =========== tailscale_ip is $tailscale_ip ==============
         IFS='.' read -r a b c d <<< "${tailscale_ip%/*}"
-        cidr_ip="$a.$b.0.0/16"
+        cidr_ip="$a.$b.0.0/10"
         value="cidr=$cidr_ip"
         sed -i "s#can-reach=192.168.1.1#$value#g" /tmp/calico.yaml
-        # 
     fi
     kubectl apply -f /tmp/calico.yaml
     if [ -f /usr/bin/tailscale ]; then
-        sleep 2 
+        sleep 8
+        warn =========== patch wireguard for calico ==============
+        sleep 8
         kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabled":true}}'
     fi
     sleep 8
 }
+
+# ssh -o StrictHostKeyChecking=no root@$ctrl_ip "kubectl taint nodes --all node.kubernetes.io/not-ready-"
 
 if [ $# > 0 ]; then
     if [[ $1 == 'calico' ]]; then
         cni=$1
         scp $bash_path/calico.yaml root@$ctrl_ip:/tmp
         ssh -o StrictHostKeyChecking=no root@$ctrl_ip "$(declare -f calico warn info error); calico $pod_network_cidr"
+        for id in ${cluster_ids[@]}; do
+            if [[ "${nok8s_ids[@]}" =~ "${id}" ]]; then
+                continue
+            fi
+            ip=$ip_segment.$id
+            ssh -o StrictHostKeyChecking=no root@$ip "systemctl restart containerd.service kubelet.service"
+        done
     else
         cni=""
     fi
@@ -131,10 +141,9 @@ else
     cni=""
 fi
 
-ssh -o StrictHostKeyChecking=no root@$ctrl_ip "kubectl taint nodes --all node.kubernetes.io/not-ready-"
 
 if [[ $cni != '' ]]; then
     warn "===== k8s cluster set up with cni plugin $cni, the control ip is $ctrl_ip ====="
 else
-    warn "===== k8s cluster set up without cni plugin, the control ip is $ctrl_ip ====="
+    error "===== k8s cluster set up without cni plugin, the control ip is $ctrl_ip ====="
 fi
