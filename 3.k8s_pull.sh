@@ -35,14 +35,14 @@ pull_image () {
 
     echo ===== images exist =====
     ctr -n k8s.io image list | awk 'NR>1 {print $1":"$2}'
-    echo ========================
+    echo ======= pulling images =================
 
     # 正式pull
     max_retries=3
     for image in $images; do
         retry=0
         # Check if the image is already pulled on the specified node
-        if ctr image list | grep -q "$image"; then
+        if ctr -n k8s.io image list | grep -q "$image"; then
             echo "$image already pulled."
         else
             while [[ $retry -lt $max_retries ]]
