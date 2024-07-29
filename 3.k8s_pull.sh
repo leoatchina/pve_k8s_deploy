@@ -3,6 +3,24 @@
 bash_path=$(cd "$(dirname "$0")";pwd)
 source $bash_path/util.sh
 
+
+d2c (){
+    if [[ $# < 1 ]]; then
+        echo ====== please input image name =======
+        return
+    else
+        img=$1
+        if [[ $# > 1 ]]; then
+            ns=$2
+        else
+            ns=k8s.io
+        fi
+    fi
+    cmd="docker pull $img && docker save $img | ctr -n=$ns images import -"
+    echo $cmd
+    eval $cmd
+}
+
 pull_image () {
     if [ ! -f /usr/bin/kubectl ];then
         echo ============== no kubectl installed ==========
@@ -16,7 +34,7 @@ pull_image () {
     done
 
     echo ===== images exist =====
-    ctr image list | awk 'NR>1 {print $1":"$2}'
+    ctr -n k8s.io image list | awk 'NR>1 {print $1":"$2}'
     echo ========================
 
     # 正式pull
@@ -27,10 +45,10 @@ pull_image () {
         if ctr image list | grep -q "$image"; then
             echo "$image already pulled."
         else
-            while [ $retry -lt $max_retries ]
+            while [[ $retry -lt $max_retries ]]
             echo "==== pulling $image ===="
             do
-                if ctr image pull "$image"; then
+                if d2c "$image"; then
                     if [ $retry -eq 0 ]; then
                         echo "$image pull succeeded."
                     else
@@ -58,5 +76,5 @@ for id in ${ids[@]}; do
     ip=$ip_segment.$id
 
     info "====== K8s pull on $ip ======"
-    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f pull_image); pull_image "
+    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f pull_image d2c); pull_image "
 done
