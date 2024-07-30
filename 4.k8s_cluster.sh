@@ -9,6 +9,7 @@ k8s_cluster () {
     ctrl_ip=$2
     service_cidr=$3
     pod_network_cidr=$4
+    join_ip=$5
 
     warn "================================"
     warn "====== $ip ======"
@@ -21,6 +22,7 @@ k8s_cluster () {
     else
         warn "== $ip Kubelet service is not running =="
     fi
+
 
     rm -rf /etc/kubernetes/kubelet.conf
     rm -rf /etc/kubernetes/pki/ca.crt
@@ -61,7 +63,7 @@ k8s_cluster () {
 
         # Initialize the control node
         kubeadm init \
-            --apiserver-advertise-address=$ctrl_ip \
+            --apiserver-advertise-address=$join_ip \
             --node-name=$(hostname) \
             --kubernetes-version=$version \
             --service-cidr=$service_cidr \
@@ -69,7 +71,7 @@ k8s_cluster () {
         cp -f /etc/kubernetes/admin.conf $HOME/.kube/config
 
     else
-        info ======== work node $ip join $ctrl_ip =========
+        info ======== work node $ip join $join_ip =========
         # Initialize a worker node
         ssh-keygen -f "/root/.ssh/known_hosts" -R $ctrl_ip
         scp -o StrictHostKeyChecking=accept-new root@$ctrl_ip:$kubeadm_file $kubeadm_file
@@ -78,10 +80,17 @@ k8s_cluster () {
         token_hash=$(grep 'discovery\-token\-ca\-cert\-hash' $kubeadm_file | sed -n -e 's/^.*--discovery-token-ca-cert-hash \(\S*\).*$/\1/p' | tail -1)
 
         rm $kubeadm_file
-        kubeadm join $ctrl_ip:6443 --token $token --discovery-token-ca-cert-hash $token_hash
+        kubeadm join $join_ip:6443 --token $token --discovery-token-ca-cert-hash $token_hash
         # scp -o StrictHostKeyChecking=accept-new root@$ctrl_ip:/etc/kubernetes/admin.conf $HOME/.kube/config
     fi
 }
+
+if [ $# > 0 ]; then
+    join_ip=$1
+else
+    join_ip=$ctrl_ip
+fi
+
 
 # =============================
 # 正式构建cluster
@@ -92,7 +101,7 @@ for id in ${cluster_ids[@]}; do
         continue
     fi
     ip=$ip_segment.$id
-    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f k8s_cluster warn info error); k8s_cluster $ip $ctrl_ip $service_cidr $pod_network_cidr"
+    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f k8s_cluster warn info error); k8s_cluster $ip $ctrl_ip $service_cidr $pod_network_cidr $join_ip"
 done
 
 # =============================
@@ -111,19 +120,18 @@ calico () {
         sed -i "s#can-reach=192.168.1.1#$value#g" /tmp/calico.yaml
     fi
     kubectl apply -f /tmp/calico.yaml
+    sleep 4
     if [ -f /usr/bin/tailscale ]; then
-        sleep 8
         warn =========== patch wireguard for calico ==============
-        sleep 8
         kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabled":true}}'
+        sleep 4
     fi
-    sleep 8
 }
 
 # ssh -o StrictHostKeyChecking=no root@$ctrl_ip "kubectl taint nodes --all node.kubernetes.io/not-ready-"
 
-if [ $# > 0 ]; then
-    if [[ $1 == 'calico' ]]; then
+if [ $# > 1 ]; then
+    if [[ $2 == 'calico' ]]; then
         cni=$1
         scp $bash_path/calico.yaml root@$ctrl_ip:/tmp
         ssh -o StrictHostKeyChecking=no root@$ctrl_ip "$(declare -f calico warn info error); calico $pod_network_cidr"
