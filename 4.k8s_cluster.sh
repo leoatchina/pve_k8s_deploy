@@ -7,9 +7,9 @@ ctrl_ip=$ip_segment.$masterid
 k8s_cluster () {
     ip=$1
     ctrl_ip=$2
-    service_cidr=$3
-    pod_network_cidr=$4
-    join_ip=$5
+    join_ip=$3
+    service_cidr=$4
+    pod_network_cidr=$5
 
     warn "================================"
     warn "====== $ip ======"
@@ -85,13 +85,20 @@ k8s_cluster () {
     fi
 }
 
-if [ $# > 0 ]; then
+if [[ $# > 0 ]]; then
     join_ip=$1
 else
     join_ip=$ctrl_ip
 fi
 
+if [[ $join_ip == $ctrl_ip ]];then
+    tailscaled=0
+else
+    tailscaled=1
+fi
 
+
+info ============= ctrl_ip: $ctrl_ip, join_ip: $join_ip,  if_tailscale_net: $tailscaled =============
 # =============================
 # 正式构建cluster
 # =============================
@@ -101,57 +108,52 @@ for id in ${cluster_ids[@]}; do
         continue
     fi
     ip=$ip_segment.$id
-    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f k8s_cluster warn info error); k8s_cluster $ip $ctrl_ip $service_cidr $pod_network_cidr $join_ip"
+    ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f k8s_cluster warn info error); k8s_cluster $ip $ctrl_ip $join_ip $service_cidr $pod_network_cidr"
 done
+
 
 # =============================
 # 在contral node 上设置 calico
 # =============================
 calico () {
     pod_network_cidr=$1
+    tailscale_ip=$2
+    tailscaled=$3
+    # 一般的代替
     sed -i "s#192.168.0.0/16#$pod_network_cidr#g" /tmp/calico.yaml
-    if [ -f /usr/bin/tailscale ]; then
+    #
+    if [[ $tailscaled > 0 ]]; then
         # 先是代替cidr
-        tailscale_ip=`ip a | grep inet | grep  tailscale | awk '{print $2}'`
         warn =========== tailscale_ip is $tailscale_ip ==============
         IFS='.' read -r a b c d <<< "${tailscale_ip%/*}"
         cidr_ip="$a.$b.0.0/10"
         value="cidr=$cidr_ip"
         sed -i "s#can-reach=192.168.1.1#$value#g" /tmp/calico.yaml
-    fi
-    kubectl apply -f /tmp/calico.yaml
-    sleep 4
-    if [ -f /usr/bin/tailscale ]; then
+        kubectl apply -f /tmp/calico.yaml
+        sleep 4
         warn =========== patch wireguard for calico ==============
         kubectl patch felixconfiguration default --type='merge' -p '{"spec":{"wireguardEnabled":true}}'
         sleep 4
+    else
+        kubectl apply -f /tmp/calico.yaml
     fi
 }
 
 # ssh -o StrictHostKeyChecking=no root@$ctrl_ip "kubectl taint nodes --all node.kubernetes.io/not-ready-"
 
-if [ $# > 1 ]; then
-    if [[ $2 == 'calico' ]]; then
-        cni=$1
-        scp $bash_path/calico.yaml root@$ctrl_ip:/tmp
-        ssh -o StrictHostKeyChecking=no root@$ctrl_ip "$(declare -f calico warn info error); calico $pod_network_cidr"
-        for id in ${cluster_ids[@]}; do
-            if [[ "${nok8s_ids[@]}" =~ "${id}" ]]; then
-                continue
-            fi
-            ip=$ip_segment.$id
-            ssh -o StrictHostKeyChecking=no root@$ip "systemctl restart containerd.service kubelet.service"
-        done
-    else
-        cni=""
+scp $bash_path/calico.yaml root@$ctrl_ip:/tmp
+ssh -o StrictHostKeyChecking=no root@$ctrl_ip "$(declare -f calico warn info error); calico $pod_network_cidr $join_ip $tailscaled"
+for id in ${cluster_ids[@]}; do
+    if [[ "${nok8s_ids[@]}" =~ "${id}" ]]; then
+        continue
     fi
-else
-    cni=""
-fi
+    ip=$ip_segment.$id
+    ssh -o StrictHostKeyChecking=no root@$ip "systemctl restart containerd.service kubelet.service"
+done
 
 
-if [[ $cni != '' ]]; then
-    warn "===== k8s cluster set up with cni plugin $cni, the control ip is $ctrl_ip ====="
+if [[ $tailscaled > 0 ]]; then
+    info "===== k8s cluster set up, the control ip is $ctrl_ip, tailscale join ip is $join_ip ====="
 else
-    error "===== k8s cluster set up without cni plugin, the control ip is $ctrl_ip ====="
+    info "===== k8s cluster set up, the control ip is $ctrl_ip ====="
 fi
