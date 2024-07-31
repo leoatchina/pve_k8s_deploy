@@ -8,5 +8,7 @@ for id in ${ids[@]}; do
 
     error "==== restart container related services on $ip ===="
     sleep 2
-    ssh -o StrictHostKeyChecking=no root@$ip "systemctl restart docker containerd  kubelet"
+    ssh -o StrictHostKeyChecking=no root@$ip "systemctl restart docker"
+    ssh -o StrictHostKeyChecking=no root@$ip "systemctl restart containerd"
+    ssh -o StrictHostKeyChecking=no root@$ip "systemctl restart kubelet"
 done
