@@ -32,10 +32,11 @@ EOF
     apt install -y python3-pip python3-venv && pip install neovim
 
     # tmux
-    if [ ! -f /usr/bin/tmux ]; then
+    [ -f /usr/bin/tmux ] && apt remove -y tmux && rm /usr/bin/tmux
+    if [ ! -f /usr/local/bin/tmux ]; then
         [ -f /tmp/tmux-3.4.tar.gz ] && rm /tmp/tmux-3.4.tar.gz
         cd /tmp && wget https://github.com/tmux/tmux/releases/download/3.4/tmux-3.4.tar.gz && \
-            tar xvf tmux-3.4.tar.gz && cd tmux-3.4 && ./configure --prefix=/usr && make -j 4 && make install
+            tar xvf tmux-3.4.tar.gz && cd tmux-3.4 && ./configure --prefix=/usr/local/bin && make -j 4 && make install
     fi
 
     # leovim
