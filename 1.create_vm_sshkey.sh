@@ -61,7 +61,7 @@ done
 echo 
 mapfile -t keys < <(awk '{print $0}' "$keys_file")
 for id in ${ids[@]}; do
-    if [ $id -eq 99 ]; then
+    if [ $id -lt 100 ]; then
         continue
     fi
     ip="$ip_segment.$id"
@@ -82,31 +82,9 @@ for id in ${ids[@]}; do
     sleep 2
 done
 
-# ================================================
-# sshd_config 
-# ================================================
-sshd_config () {
-    if [ $# -gt 0 ]; then
-        id=$1 
-    else
-        return 
-    fi
-    sed_replace () {
-        fl=$1 
-        sed -i 's/^#.*PermitRootLogin.*$/PermitRootLogin yes/' $fl 
-        sed -i 's/^#.*PubkeyAuthentication.*$/PubkeyAuthentication yes/' $fl 
-        sed -i 's/^#.*PasswordAuthentication.*$/PasswordAuthentication yes/' $fl 
-    }
-    if [ $id -gt 110 ] ; then
-        sed_replace /etc/ssh/sshd_config
-        rm /etc/ssh/sshd_config.d/*
-        systemctl restart sshd
-        echo "sshd Done"
-    fi
-}
 
 for id in ${ids[@]}; do
-    if [ $id -eq 99 ]; then
+    if [ $id -lt 100 ]; then
         continue
     fi
     ip=$ip_segment.$id

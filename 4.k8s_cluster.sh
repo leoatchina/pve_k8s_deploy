@@ -140,7 +140,6 @@ calico () {
 }
 
 # ssh -o StrictHostKeyChecking=no root@$ctrl_ip "kubectl taint nodes --all node.kubernetes.io/not-ready-"
-
 scp $bash_path/calico.yaml root@$ctrl_ip:/tmp
 ssh -o StrictHostKeyChecking=no root@$ctrl_ip "$(declare -f calico warn info error); calico $pod_network_cidr $join_ip $tailscaled"
 for id in ${cluster_ids[@]}; do
