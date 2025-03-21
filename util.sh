@@ -52,7 +52,9 @@ create_vm() {
 
 
     if [[ $id -eq 100 ]]; then
-        size="200G"
+        size="400G"
+    elif [[ $id -eq 200 ]]; then
+        size="600G"
     else
         size="80G"
     fi

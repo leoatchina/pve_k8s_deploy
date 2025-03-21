@@ -39,12 +39,10 @@ for id in ${ids[@]}; do
     else
         warn "====== Installing k8s on $ip ======"
         ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f install_k8s); install_k8s $k8s_version"
-
         if [ $proxy_exist > 0 ]; then
             info "====== Set kubelet proxy on $ip ======"
             ssh -o StrictHostKeyChecking=no root@$ip "$(declare -f set_proxy); set_proxy /usr/lib/systemd/system/kubelet.service $http_proxy $https_proxy $no_proxy"
         fi
-
     fi
     sleep 5
 done

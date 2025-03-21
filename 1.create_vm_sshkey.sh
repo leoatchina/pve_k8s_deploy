@@ -31,7 +31,7 @@ for id in ${ids[@]}; do
 done
 
 # NOTE:  must sleep to make last vm started.
-sleep 60 
+sleep 32 
 
 # ================================================
 # 生成每个机器的sshkey
