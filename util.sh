@@ -29,7 +29,7 @@ warn() {
 configure_network() {
     local id=$1
     qm set $id --ipconfig0 gw=$gateway,ip=$ip_segment.$id/$netmask
-    qm set $id --nameserver $nameserver --searchdomain $searchdomain 
+    qm set $id --nameserver $nameserver --searchdomain $searchdomain
     # password
     qm set $id --ciuser root --cipassword Ingru$id
     # add ssh-key
@@ -38,7 +38,7 @@ configure_network() {
 
 create_vm() {
     local id=$1
-    
+
     # 注意这里的绝对路径
     if [ $# -gt 1 ]; then
         img="$2"
@@ -68,7 +68,7 @@ create_vm() {
     # Set the SCSI controller and disk for the virtual machine with the specified ID
     qm set $id --scsihw virtio-scsi-pci --scsi0 local-lvm:vm-$id-disk-0
     # Resize the disk for the virtual machine with the specified ID to 128GB
-    qm resize $id scsi0 $size 
+    qm resize $id scsi0 $size
 
     qm set $id --ide0 local-lvm:cloudinit
     # Set the serial and VGA settings for the virtual machine with the specified ID.
@@ -87,19 +87,19 @@ set_pci() {
 }
 
 # ================================================
-# sshd_config 
+# sshd_config
 # ================================================
 sshd_config () {
     if [ $# -gt 0 ]; then
-        id=$1 
+        id=$1
     else
-        return 
+        return
     fi
     sed_replace () {
-        fl=$1 
-        sed -i 's/^#.*PermitRootLogin.*$/PermitRootLogin yes/' $fl 
-        sed -i 's/^#.*PubkeyAuthentication.*$/PubkeyAuthentication yes/' $fl 
-        sed -i 's/^#.*PasswordAuthentication.*$/PasswordAuthentication yes/' $fl 
+        fl=$1
+        sed -i 's/^#.*PermitRootLogin.*$/PermitRootLogin yes/' $fl
+        sed -i 's/^#.*PubkeyAuthentication.*$/PubkeyAuthentication yes/' $fl
+        sed -i 's/^#.*PasswordAuthentication.*$/PasswordAuthentication yes/' $fl
     }
     if [ $id -gt 110 ] ; then
         sed_replace /etc/ssh/sshd_config
@@ -125,24 +125,28 @@ if has('nvim')
     source ~/.leovim/conf.d/init.vim
 endif
 EOF
-
     # set apt sources
     sed -i 's/http:\/\/archive.ubuntu.com/http:\/\/mirrors.aliyun.com/g' /etc/apt/sources.list
     sed -i 's/http:\/\/security.ubuntu.com/http:\/\/mirrors.aliyun.com/g' /etc/apt/sources.list
-    # apt install 
+    # apt install
+    add-apt-repository -y ppa:ubuntu-toolchain-r/test
     apt update -y
-    apt install -y libevent-dev ncurses-dev bison pkg-config build-essential
-    apt install -y vim git ripgrep universal-ctags htop zip unzip
-    apt install -y apt-transport-https ca-certificates curl software-properties-common
+    apt install -y apt-transport-https ca-certificates software-properties-common curl wget pkg-config
     apt install -y lua5.3 nfs-common net-tools sshfs tcpdump
-    apt install -y python3-pip python3-venv && pip install neovim
+    apt install -y build-essential gcc-11 g++-11  libgomp1 libevent-dev libncurses5-dev libncursesw5-dev ncurses-dev yacc bison automake autoconf libtool
+    update-alternatives -y --install /usr/bin/gcc gcc /usr/bin/gcc-11 60 --slave /usr/bin/g++ g++ /usr/bin/g++-11
+    apt install -y vim git ripgrep universal-ctags htop btop nvtop zip unzip
+    apt install -y python3-pip python3-venv
+    pip install --upgrade pip
+    pip install --upgrade setuptools wheel
+    pip install neovim nvitop gpustat
 
     # tmux
     [ -f /usr/bin/tmux ] && apt remove -y tmux && rm /usr/bin/tmux
     if [ ! -f /usr/local/bin/tmux ]; then
         [ -f /tmp/tmux-3.4.tar.gz ] && rm /tmp/tmux-3.4.tar.gz
         cd /tmp && wget https://github.com/tmux/tmux/releases/download/3.4/tmux-3.4.tar.gz && \
-            tar xvf tmux-3.4.tar.gz && cd tmux-3.4 && ./configure --prefix=/usr/local && make -j 4 && make install
+        tar xvf tmux-3.4.tar.gz && cd tmux-3.4 && ./configure --prefix=/usr/local && make -j 4 && make install
     fi
 
     # leovim
@@ -233,7 +237,7 @@ set_proxy () {
     local_echo() {
         echo -e "\033[34m$@\033[0m"
     }
-    
+
     fl=$1
     if [ -f "$fl" ]; then
         local_echo "$fl exists."
@@ -245,7 +249,7 @@ set_proxy () {
     http_proxy="$2"
     https_proxy="$3"
     no_proxy="$4"
-    
+
     # 检查并添加代理设置
     add_proxy_if_missing() {
         local service_file="$1"
@@ -286,7 +290,7 @@ set_proxy () {
     add_proxy_if_missing $fl 'Environment="NO_PROXY' "$no_proxy"
     add_proxy_if_missing $fl 'Environment="HTTPS_PROXY' "$https_proxy"
     add_proxy_if_missing $fl 'Environment="HTTP_PROXY' "$http_proxy"
-    
+
     systemctl daemon-reload
     echo "================== cat $fl | grep PROXY ================"
     cat $fl | grep PROXY
